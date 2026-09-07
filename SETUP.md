@@ -29,7 +29,19 @@ Project URL и anon public клучот од чекор 1.6. Ова можеш �
 (URL + anon клуч) и јас ќе го направам тоа наместо тебе — тие два податока
 не се тајна, безбедно е да ми ги пратиш.
 
-## 3. Направи бесплатен Vercel account (hosting)
+## 3. Google login
+
+1. Во Supabase отвори **Authentication → Providers → Google** и активирај го
+   Google provider-от.
+2. Во Google Cloud Console направи OAuth Client ID од тип **Web application**.
+3. Во Supabase внеси ги Google Client ID и Client Secret.
+4. Во **Authentication → URL Configuration** додади redirect URL за твојот
+   deployed домен со патека `/hub.html`.
+
+OAuth не работи со директно отворање на `file://` HTML фајл. Користи Vercel
+или локален HTTP server.
+
+## 4. Направи бесплатен Vercel account (hosting)
 
 1. Оди на [vercel.com](https://vercel.com) → регистрирај се со GitHub
    сметката поврзана со овој repo.
@@ -39,10 +51,10 @@ Project URL и anon public клучот од чекор 1.6. Ова можеш �
    `workshop-xxxx.vercel.app`.
 5. Секој нареден push кон branch-от автоматски го ажурира сајтот.
 
-## 4. Прв корисник (сопственик/admin)
+## 5. Прв корисник (сопственик/admin)
 
-1. Отвори го deployed линкот → `login.html` → регистрирај се со email и
-   лозинка (првиот корисник треба да си ти, сопственикот).
+1. Отвори го deployed линкот → `login.html` → најави се со Google
+   (првиот корисник треба да си ти, сопственикот).
 2. Во Supabase → **SQL Editor** → изврши:
    ```sql
    update public.profiles set role = 'admin'
@@ -60,3 +72,11 @@ Supabase бесплатниот план прави автоматски дне�
 надградба на **Pro план** (~25$/месец) кој дава подолго задржување на
 бекапи и point-in-time recovery. Ова не мора да се направи веднаш — само
 имај го на ум пред да тргнеш во продукциска употреба.
+
+## Активирање на Team chat
+
+По додавањето на chat функционалноста, отвори **Supabase → SQL Editor →
+New query**, залепи ја целата содржина од [`supabase/schema.sql`](supabase/schema.sql)
+и притисни **Run**. Скриптата е безбедна за повторно извршување и ги додава
+`chat_messages`, правилата за пристап и live ажурирањето. Овој чекор се прави
+само еднаш за постојниот Supabase проект.

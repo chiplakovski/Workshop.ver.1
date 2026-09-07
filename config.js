@@ -7,5 +7,5 @@
 // anywhere in this repo — that one bypasses all security rules.
 //
 // Fill these in following SETUP.md step 1-2.
-const SUPABASE_URL = "REPLACE_WITH_YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "REPLACE_WITH_YOUR_SUPABASE_ANON_PUBLIC_KEY";
+const SUPABASE_URL = "https://waqyxcphlkzzbnxgfibt.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhcXl4Y3BobGt6emJueGdmaWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MTI4MDQsImV4cCI6MjEwNDI4ODgwNH0.3evzIHD_9qx07RBZZgOQg8kgBsccEUulp-9P53vs_zE";

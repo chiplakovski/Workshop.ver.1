@@ -3,9 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Најава — Workshop</title>
+<title>Sign in</title>
 <style>
-  :root { color-scheme: light; }
+  :root {
+    color-scheme: dark;
+    --navy-950: #06111f;
+    --navy-900: #0a1d34;
+    --navy-800: #102d4d;
+    --line: rgba(118, 188, 232, 0.14);
+    --cyan: #6ed7f5;
+    --text: #e9f4fb;
+    --muted: #93aec2;
+  }
+  html { overflow: hidden; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -13,137 +23,382 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: system-ui, sans-serif;
-    background: #f4f5f7;
+    padding: 1.5rem;
+    overflow: hidden;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(44, 136, 190, 0.28), transparent 30%),
+      radial-gradient(circle at 84% 88%, rgba(17, 83, 142, 0.3), transparent 34%),
+      var(--navy-950);
+    position: relative;
   }
+  body::before,
+  body::after {
+    content: "";
+    position: absolute;
+    inset: -35%;
+    pointer-events: none;
+  }
+  body::before {
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 72px 72px;
+    transform: perspective(460px) rotateX(62deg) translateY(18%);
+    transform-origin: center bottom;
+    animation: grid-drift 16s linear infinite;
+    opacity: 0.8;
+  }
+  body::after {
+    inset: -10%;
+    background:
+      repeating-linear-gradient(116deg, transparent 0 18%, rgba(87, 205, 242, 0.15) 18.2% 18.45%, transparent 18.7% 42%),
+      radial-gradient(circle at 18% 30%, rgba(80, 195, 233, 0.35) 0 1px, transparent 2px),
+      radial-gradient(circle at 76% 64%, rgba(80, 195, 233, 0.3) 0 1px, transparent 2px),
+      radial-gradient(ellipse at center, transparent 42%, rgba(2, 8, 16, 0.42) 82%);
+    background-size: 180% 180%, auto, auto, auto;
+    animation: atmosphere 9s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
+  }
+  @keyframes grid-drift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 0 72px, 72px 0; }
+  }
+  @keyframes atmosphere {
+    from { background-position: 0% 0%, 0 0, 0 0, 0 0; transform: scale(1) translate3d(-1%, -1%, 0); }
+    to { background-position: 100% 100%, 24px 34px, -28px -18px, 0 0; transform: scale(1.08) translate3d(1%, 1%, 0); }
+  }
+  .brand-lockup,
+  .corner-date,
+  .copyright {
+    position: fixed;
+    z-index: 1;
+  }
+  .brand-lockup {
+    top: 1.25rem;
+    left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .brand-name {
+    color: var(--text);
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+  .brand-detail {
+    color: var(--cyan);
+    font: 600 0.62rem/1.2 "Segoe UI", sans-serif;
+    letter-spacing: 0.2em;
+  }
+  .language-control {
+    position: fixed;
+    z-index: 1;
+    bottom: 1.25rem;
+    left: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .corner-date,
+  .copyright {
+    color: rgba(147, 174, 194, 0.72);
+    font: 0.7rem/1.3 "Segoe UI", sans-serif;
+    letter-spacing: 0.04em;
+  }
+  .corner-date { top: 1.25rem; right: 1.5rem; }
+  .copyright { bottom: 1.25rem; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap; }
   form {
-    background: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem;
     width: 100%;
-    max-width: 320px;
+    max-width: 390px;
+    animation: form-arrival 700ms cubic-bezier(.2, .8, .2, 1) both;
   }
-  h1 { font-size: 1.25rem; margin: 0 0 1.25rem; text-align: center; }
-  label { display: block; font-size: 0.85rem; margin: 0.75rem 0 0.25rem; }
-  input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+  .eyebrow {
+    display: block;
+    margin-bottom: 1.1rem;
+    color: var(--cyan);
+    font: 600 0.66rem/1.2 "Segoe UI", sans-serif;
+    letter-spacing: 0.18em;
+  }
+  @keyframes form-arrival {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .topline { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
+  .language-label { color: var(--muted); font-size: 0.7rem; }
+  select {
+    padding: 0.38rem 1.8rem 0.38rem 0.55rem;
+    border: 1px solid rgba(147, 174, 194, 0.35);
+    border-radius: 6px;
+    outline: none;
+    background: rgba(3, 14, 27, 0.62);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  h1 { font-size: clamp(1.7rem, 5vw, 2.2rem); letter-spacing: -0.03em; margin: 0.2rem 0 0.7rem; text-align: center; }
+  .intro { color: var(--muted); line-height: 1.55; margin: 0 0 1.8rem; font-size: 0.9rem; text-align: center; }
+  .google-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: min(100%, 300px);
+    margin: 0 auto;
+    padding: 0.8rem 1.1rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    border: 1px solid rgba(211, 224, 232, 0.4);
+    border-radius: 11px;
+    box-shadow: none;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    font-family: "Segoe UI", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .google-mark {
+    display: grid;
+    place-items: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    background: transparent;
+    background-image: linear-gradient(135deg, #4285f4 15%, #34a853 42%, #fbbc05 67%, #ea4335 88%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font: 700 1.4rem/1 Arial, sans-serif;
+    transform: translateY(-0.02em);
   }
   button {
     width: 100%;
-    margin-top: 1.25rem;
-    padding: 0.6rem;
+    margin-top: 1.7rem;
+    padding: 0.82rem;
     border: none;
-    border-radius: 4px;
-    background: #013179;
-    color: #fff;
+    border-radius: 7px;
+    background: var(--cyan);
+    color: #062039;
+    font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
+    transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  }
+  button:hover:not(:disabled) {
+    background: #a5e9fa;
+    box-shadow: 0 8px 24px rgba(110, 215, 245, 0.2);
+    transform: translateY(-1px);
+  }
+  .google-button:hover:not(:disabled) {
+    background: rgba(110, 215, 245, 0.12);
+    color: var(--cyan);
+    border-color: var(--cyan);
+    box-shadow: none;
+    transform: translateY(-1px);
+  }
+  .google-button:focus-visible {
+    outline: 3px solid rgba(110, 215, 245, 0.45);
+    outline-offset: 3px;
   }
   button:disabled { opacity: 0.6; cursor: default; }
-  .toggle {
-    margin-top: 0.9rem;
+  .note {
+    position: fixed;
+    z-index: 1;
+    bottom: 3.15rem;
+    left: 50%;
+    width: max-content;
+    max-width: calc(100vw - 3rem);
+    margin: 0;
+    transform: translateX(-50%);
     text-align: center;
-    font-size: 0.85rem;
+    color: var(--muted);
+    font-size: 0.82rem;
   }
-  .toggle a { color: #013179; cursor: pointer; }
   #message {
-    margin-top: 0.9rem;
-    font-size: 0.85rem;
-    text-align: center;
-    min-height: 1.1em;
+    position: fixed;
+    z-index: 5;
+    left: 1.5rem;
+    bottom: 4.35rem;
+    width: max-content;
+    max-width: min(440px, calc(100vw - 3rem));
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid rgba(110, 215, 245, 0.2);
+    border-radius: 8px;
+    background: rgba(5, 19, 34, 0.9);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
+    color: var(--muted);
+    text-align: left;
+    font: 0.72rem/1.4 "Segoe UI", sans-serif;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
-  #message.error { color: #b3261e; }
-  #message.ok { color: #1a7a3c; }
+  #message:empty { display: none; }
+  #message::before {
+    content: "";
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
+    margin-top: 0.2rem;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(110, 215, 245, 0.1);
+  }
+  #message.error { border-color: rgba(240, 138, 138, 0.28); color: #f4b0b0; }
+  #message.error::before { background: #f08a8a; box-shadow: 0 0 0 3px rgba(240, 138, 138, 0.11); }
+  #message.ok { color: #9ae8c2; }
+  #message.ok::before { background: #5be39a; box-shadow: 0 0 0 3px rgba(91, 227, 154, 0.11); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
 <body>
+  <div class="brand-lockup" aria-label="Secure access">
+    <span class="brand-detail">SECURE ACCESS</span>
+  </div>
+  <time class="corner-date" id="current-date" datetime="2026-09-07">September 7, 2026</time>
+  <div class="language-control">
+    <label class="language-label" for="language">Language</label>
+    <select id="language" aria-label="Language">
+      <option value="en">English</option>
+      <option value="mk">Македонски</option>
+      <option value="sv">Svenska</option>
+    </select>
+  </div>
+
   <form id="auth-form">
-    <h1 id="form-title">Најава</h1>
+    <h1 id="form-title">Welcome back</h1>
+    <p class="intro" id="intro">This is where your next adventure begins.</p>
 
-    <label for="email">Email</label>
-    <input type="email" id="email" required autocomplete="email" />
-
-    <label for="password">Лозинка</label>
-    <input type="password" id="password" required autocomplete="current-password" minlength="6" />
-
-    <button type="submit" id="submit-btn">Најави се</button>
-
-    <div class="toggle">
-      <span id="toggle-text">Немаш сметка? <a id="toggle-link">Регистрирај се</a></span>
-    </div>
-
-    <div id="message"></div>
+    <button class="google-button" type="submit" id="submit-btn">
+      <span class="google-mark" aria-hidden="true">G</span>
+      <span id="button-text">Continue with Google</span>
+    </button>
   </form>
+
+  <div id="message" role="status" aria-live="polite"></div>
+  <p class="note" id="note">Authentication is handled securely by Google.</p>
+
+  <footer class="copyright" id="copyright">All rights reserved 2026</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script>
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const hasSupabaseConfig = typeof SUPABASE_URL === "string" && SUPABASE_URL.startsWith("http");
+    const client = hasSupabaseConfig
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+    const isWebOrigin = window.location.protocol === "http:" || window.location.protocol === "https:";
 
-    let mode = "signin";
     const form = document.getElementById("auth-form");
     const title = document.getElementById("form-title");
     const submitBtn = document.getElementById("submit-btn");
-    const toggleText = document.getElementById("toggle-text");
-    const toggleLink = document.getElementById("toggle-link");
+    const buttonText = document.getElementById("button-text");
+    const intro = document.getElementById("intro");
+    const note = document.getElementById("note");
+    const language = document.getElementById("language");
     const message = document.getElementById("message");
+    const currentDate = document.getElementById("current-date");
+    const copyright = document.getElementById("copyright");
 
-    function setMode(next) {
-      mode = next;
-      const isSignIn = mode === "signin";
-      title.textContent = isSignIn ? "Најава" : "Регистрација";
-      submitBtn.textContent = isSignIn ? "Најави се" : "Регистрирај се";
-      toggleText.innerHTML = isSignIn
-        ? 'Немаш сметка? <a id="toggle-link">Регистрирај се</a>'
-        : 'Веќе имаш сметка? <a id="toggle-link">Најави се</a>';
-      document.getElementById("toggle-link").addEventListener("click", () => {
-        setMode(isSignIn ? "signup" : "signin");
-      });
+    const translations = {
+      en: {
+        title: "Ready to start?",
+        intro: "This is where your next adventure begins.",
+        language: "Language",
+        button: "Sign in with Google",
+        note: "Authentication is handled securely by Google.",
+        error: "Google sign-in could not be started. Please try again.",
+        locale: "en-US",
+        rights: "All rights reserved"
+      },
+      mk: {
+        title: "Подготвен си да започнеш?",
+        intro: "Тука започнува твојата следна авантура.",
+        language: "Јазик",
+        button: "Најави се со Google",
+        note: "Автентикацијата ја обработува Google на безбеден начин.",
+        error: "Најавата со Google не можеше да започне. Обиди се повторно.",
+        locale: "mk-MK",
+        rights: "Сите права се задржани"
+      },
+      sv: {
+        title: "Redo att börja?",
+        intro: "Här börjar ditt nästa äventyr.",
+        language: "Språk",
+        button: "Logga in med Google",
+        note: "Autentiseringen hanteras säkert av Google.",
+        error: "Google-inloggningen kunde inte startas. Försök igen.",
+        locale: "sv-SE",
+        rights: "Alla rättigheter förbehållna"
+      }
+    };
+
+    function setLanguage(nextLanguage) {
+      const copy = translations[nextLanguage];
+      document.documentElement.lang = nextLanguage;
+      document.title = copy.title;
+      title.textContent = copy.title;
+      intro.textContent = copy.intro;
+      document.querySelector(".language-label").textContent = copy.language;
+      language.setAttribute("aria-label", copy.language);
+      buttonText.textContent = copy.button;
+      note.textContent = copy.note;
+      currentDate.textContent = new Intl.DateTimeFormat(copy.locale, {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      }).format(new Date());
+      currentDate.dateTime = new Date().toISOString().slice(0, 10);
+      copyright.textContent = `${copy.rights} ${new Date().getFullYear()}`;
       message.textContent = "";
       message.className = "";
     }
-    toggleLink.addEventListener("click", () => setMode("signup"));
+    language.addEventListener("change", () => setLanguage(language.value));
+    setLanguage("en");
 
     // Already logged in? Skip straight to the hub.
-    client.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = "hub.html";
-    });
+    if (client) {
+      client.auth.getSession().then(({ data }) => {
+        if (data.session) window.location.href = "hub.html";
+      });
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
 
       submitBtn.disabled = true;
       message.textContent = "";
       message.className = "";
 
-      const { error } =
-        mode === "signin"
-          ? await client.auth.signInWithPassword({ email, password })
-          : await client.auth.signUp({ email, password });
+      if (!client || !isWebOrigin) {
+        message.textContent = translations[language.value].error;
+        message.className = "error";
+        submitBtn.disabled = false;
+        return;
+      }
 
-      submitBtn.disabled = false;
-
+      const { error } = await client.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/hub.html` }
+      });
       if (error) {
         message.textContent = error.message;
         message.className = "error";
+        submitBtn.disabled = false;
         return;
       }
-
-      if (mode === "signup") {
-        message.textContent = "Сметката е направена. Провери го email-от ако е потребна потврда, потоа најави се.";
-        message.className = "ok";
-        setMode("signin");
-        return;
-      }
-
-      window.location.href = "hub.html";
     });
   </script>
 </body>

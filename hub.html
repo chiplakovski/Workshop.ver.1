@@ -1,76 +1,820 @@
 <!doctype html>
-<html lang="mk">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Почетна — Workshop</title>
+<title>Workspace</title>
 <style>
-  :root { color-scheme: light; }
+  :root {
+    color-scheme: dark;
+    --navy-950: #06111f;
+    --navy-900: #0a1d34;
+    --line: rgba(118, 188, 232, 0.14);
+    --cyan: #6ed7f5;
+    --text: #e9f4fb;
+    --muted: #93aec2;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: system-ui, sans-serif;
-    background: #f4f5f7;
     min-height: 100vh;
+    overflow-x: hidden;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(44, 136, 190, 0.28), transparent 30%),
+      radial-gradient(circle at 84% 88%, rgba(17, 83, 142, 0.3), transparent 34%),
+      var(--navy-950);
+    position: relative;
+  }
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -35%;
+    pointer-events: none;
+  }
+  body::before {
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 72px 72px;
+    transform: perspective(460px) rotateX(62deg) translateY(18%);
+    transform-origin: center bottom;
+    animation: grid-drift 16s linear infinite;
+    opacity: 0.8;
+  }
+  body::after {
+    inset: -10%;
+    background:
+      repeating-linear-gradient(116deg, transparent 0 22%, rgba(87, 205, 242, 0.12) 22.2% 22.35%, transparent 22.55% 44%),
+      radial-gradient(ellipse at center, transparent 42%, rgba(2, 8, 16, 0.42) 82%);
+    background-size: 180% 180%, auto;
+    animation: atmosphere 9s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
+  }
+  @keyframes grid-drift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 0 72px, 72px 0; }
+  }
+  @keyframes atmosphere {
+    from { background-position: 0% 0%, 0 0; transform: scale(1) translate3d(-1%, -1%, 0); }
+    to { background-position: 100% 100%, 0 0; transform: scale(1.08) translate3d(1%, 1%, 0); }
+  }
+  .shell {
+    position: relative;
+    z-index: 1;
+    width: min(92vw, 1560px);
+    margin: 0 auto;
+    padding: clamp(1.5rem, 3vw, 2.75rem) 0 4rem;
+    animation: page-arrival 700ms cubic-bezier(.2, .8, .2, 1) both;
+  }
+  .transition-in .shell { animation-duration: 1000ms; }
+  @keyframes page-arrival {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   header {
-    background: #013179;
-    color: #fff;
-    padding: 1rem 1.5rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 2rem;
+    padding-bottom: 1.75rem;
   }
-  header h1 { font-size: 1.1rem; margin: 0; }
+  .eyebrow {
+    margin: 0 0 0.9rem;
+    color: var(--cyan);
+    font: 600 0.68rem/1.2 "Segoe UI", sans-serif;
+    letter-spacing: 0.2em;
+  }
+  header h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.7rem);
+    letter-spacing: -0.04em;
+  }
+  header p { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.88rem; }
+  .header-actions { display: flex; align-items: center; gap: 1.25rem; }
+  .session-info { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
+  .session-user { color: var(--text); font-size: 0.78rem; }
+  .session-active { color: var(--muted); font-size: 0.7rem; }
+  #date { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
   header button {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.6);
-    color: #fff;
-    padding: 0.4rem 0.9rem;
-    border-radius: 4px;
+    border: 1px solid rgba(147, 174, 194, 0.45);
+    color: var(--text);
+    padding: 0.6rem 0.9rem;
+    border-radius: 7px;
     cursor: pointer;
+    font: inherit;
+    transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
   }
-  main { max-width: 640px; margin: 2rem auto; padding: 0 1.5rem; }
-  .card {
-    background: #fff;
+  header button:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(110, 215, 245, 0.08); }
+  .workspace-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 1rem;
+    align-items: start;
+  }
+  main {
+    min-width: 0;
+    padding: 0;
+  }
+  .welcome {
+    position: fixed;
+    z-index: 5;
+    left: 1.5rem;
+    bottom: 1.25rem;
+    width: max-content;
+    max-width: min(440px, calc(100vw - 3rem));
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid rgba(110, 215, 245, 0.2);
     border-radius: 8px;
-    padding: 1.25rem 1.5rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    background: rgba(5, 19, 34, 0.9);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24);
+    color: var(--muted);
+    font: 0.72rem/1.4 "Segoe UI", sans-serif;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
-  .card p { color: #444; line-height: 1.5; }
+  .welcome::before {
+    content: "";
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
+    margin-top: 0.2rem;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(110, 215, 245, 0.1);
+  }
+  .welcome.success::before { background: #5be39a; box-shadow: 0 0 0 3px rgba(91, 227, 154, 0.11); }
+  .welcome.error { border-color: rgba(240, 138, 138, 0.28); color: #f4b0b0; }
+  .welcome.error::before { background: #f08a8a; box-shadow: 0 0 0 3px rgba(240, 138, 138, 0.11); }
+  .modules {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.9rem;
+  }
+  .module {
+    grid-column: span 2;
+    min-height: clamp(150px, 11vw, 172px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(1rem, 1.4vw, 1.25rem);
+    border: 1px solid rgba(139, 216, 245, 0.22);
+    border-radius: 12px;
+    background: rgba(9, 30, 52, 0.48);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  }
+  .module:nth-child(4),
+  .module:nth-child(5) { grid-column: span 2; }
+  .module:hover { transform: translateY(-4px); border-color: var(--cyan); background: rgba(16, 52, 82, 0.66); }
+  .module h2 { margin: 0; font-size: 1.22rem; }
+  .module p { margin: 0.45rem 0 0; color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+  .module-arrow { align-self: flex-end; color: var(--cyan); font-size: 1.2rem; }
+  .chat-panel {
+    height: min(650px, calc(100vh - 170px));
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(139, 216, 245, 0.22);
+    border-radius: 12px;
+    background: rgba(7, 24, 43, 0.72);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .chat-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.15rem 0.9rem;
+  }
+  .chat-kicker {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--cyan);
+    font: 600 0.62rem/1.2 "Segoe UI", sans-serif;
+    letter-spacing: 0.16em;
+  }
+  .chat-heading h2 { margin: 0; font-size: 1.08rem; }
+  .chat-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.1rem;
+    color: var(--muted);
+    font: 0.67rem/1.2 "Segoe UI", sans-serif;
+    white-space: nowrap;
+  }
+  .chat-live::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #778b9a;
+    box-shadow: 0 0 0 3px rgba(119, 139, 154, 0.1);
+  }
+  .chat-live.connected::before {
+    background: #5be39a;
+    box-shadow: 0 0 0 3px rgba(91, 227, 154, 0.12);
+  }
+  .chat-live.error::before { background: #f08a8a; }
+  .chat-channels {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0 1.15rem 0.85rem;
+    border-bottom: 1px solid rgba(139, 216, 245, 0.12);
+  }
+  .chat-channel {
+    min-width: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    padding: 0.42rem 0.58rem;
+    cursor: pointer;
+    font: 0.7rem/1 "Segoe UI", sans-serif;
+    transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+  .chat-channel:hover:not(:disabled) { color: var(--text); background: rgba(110, 215, 245, 0.06); }
+  .chat-channel.active {
+    color: var(--cyan);
+    border-color: rgba(110, 215, 245, 0.2);
+    background: rgba(110, 215, 245, 0.08);
+  }
+  .chat-channel:disabled { cursor: not-allowed; opacity: 0.55; }
+  .chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(110, 215, 245, 0.28) transparent;
+  }
+  .chat-messages::-webkit-scrollbar { width: 6px; }
+  .chat-messages::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(110, 215, 245, 0.28); }
+  .chat-notice {
+    height: 100%;
+    display: grid;
+    place-content: center;
+    gap: 0.35rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .chat-notice strong { font-size: 0.82rem; }
+  .chat-notice span { color: var(--muted); font-size: 0.72rem; line-height: 1.45; }
+  .chat-notice.error strong { color: #f5a0a0; }
+  .chat-message {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.55rem;
+    margin-bottom: 0.85rem;
+  }
+  .chat-message.own { flex-direction: row-reverse; }
+  .chat-avatar {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(110, 215, 245, 0.25);
+    border-radius: 50%;
+    background: rgba(110, 215, 245, 0.09);
+    color: var(--cyan);
+    font: 600 0.62rem/1 "Segoe UI", sans-serif;
+  }
+  .chat-copy { max-width: 78%; }
+  .chat-meta {
+    display: flex;
+    gap: 0.45rem;
+    margin: 0 0 0.25rem 0.15rem;
+    color: var(--muted);
+    font: 0.62rem/1.2 "Segoe UI", sans-serif;
+  }
+  .chat-message.own .chat-meta { justify-content: flex-end; margin-right: 0.15rem; }
+  .chat-author { color: var(--text); font-weight: 600; }
+  .chat-bubble {
+    margin: 0;
+    padding: 0.58rem 0.7rem;
+    border: 1px solid rgba(139, 216, 245, 0.14);
+    border-radius: 4px 10px 10px 10px;
+    background: rgba(15, 43, 68, 0.72);
+    color: #dbeaf4;
+    font: 0.75rem/1.45 "Segoe UI", sans-serif;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .chat-message.own .chat-bubble {
+    border-color: rgba(110, 215, 245, 0.22);
+    border-radius: 10px 4px 10px 10px;
+    background: rgba(31, 102, 139, 0.38);
+  }
+  .chat-composer {
+    padding: 0.8rem;
+    border-top: 1px solid rgba(139, 216, 245, 0.12);
+    background: rgba(4, 17, 31, 0.45);
+  }
+  .chat-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.45rem 0.45rem 0.45rem 0.7rem;
+    border: 1px solid rgba(147, 174, 194, 0.28);
+    border-radius: 9px;
+    background: rgba(7, 20, 35, 0.72);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+  .chat-input-row:focus-within {
+    border-color: rgba(110, 215, 245, 0.58);
+    box-shadow: 0 0 0 3px rgba(110, 215, 245, 0.06);
+  }
+  #chat-input {
+    flex: 1;
+    min-height: 32px;
+    max-height: 96px;
+    resize: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    padding: 0.42rem 0;
+    font: 0.76rem/1.35 "Segoe UI", sans-serif;
+  }
+  #chat-input::placeholder { color: rgba(147, 174, 194, 0.62); }
+  #chat-input:disabled { cursor: not-allowed; }
+  .chat-send {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: var(--cyan);
+    color: #071a2c;
+    cursor: pointer;
+    font: 700 1rem/1 "Segoe UI", sans-serif;
+    transition: transform 160ms ease, opacity 160ms ease;
+  }
+  .chat-send:hover:not(:disabled) { transform: translateY(-1px); }
+  .chat-send:disabled { cursor: not-allowed; opacity: 0.35; }
+  .chat-feedback {
+    min-height: 0.8rem;
+    margin: 0.45rem 0.2rem 0;
+    color: var(--muted);
+    font: 0.62rem/1.25 "Segoe UI", sans-serif;
+  }
+  .chat-feedback.error { color: #f5a0a0; }
+  .copyright {
+    position: fixed;
+    z-index: 1;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(147, 174, 194, 0.72);
+    font: 0.7rem/1.3 "Segoe UI", sans-serif;
+    letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
+  }
+  @media (max-width: 1200px) {
+    .shell { width: min(92vw, 900px); }
+    .workspace-layout { grid-template-columns: 1fr; }
+    .chat-panel { height: 520px; min-height: 0; }
+  }
+  @media (max-width: 960px) {
+    .shell { width: min(92vw, 760px); }
+    .modules { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .module,
+    .module:nth-child(4),
+    .module:nth-child(5) { grid-column: auto; }
+    .module:last-child {
+      grid-column: 1 / -1;
+      width: calc((100% - 0.9rem) / 2);
+      justify-self: center;
+    }
+  }
+  @media (max-width: 720px) {
+    .shell { width: min(100% - 2rem, 560px); padding-top: 1.5rem; }
+    header { display: block; padding-bottom: 2rem; }
+    .header-actions { justify-content: space-between; margin-top: 1.5rem; }
+    .modules { grid-template-columns: 1fr; }
+    .module,
+    .module:nth-child(4),
+    .module:nth-child(5),
+    .module:last-child { grid-column: auto; width: auto; min-height: 150px; }
+    .chat-panel { height: 500px; }
+    .chat-channels { overflow-x: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
-<body>
-  <header>
-    <h1>Workshop</h1>
-    <button id="logout-btn">Одјава</button>
-  </header>
-  <main>
-    <div class="card">
-      <p id="welcome">Се вчитува...</p>
-      <p>Основата (најава преку Supabase) работи. Модулите (клиенти, проекти,
-      набавки, работни налози, итн.) ќе се додаваат тука чекор по чекор.</p>
+<body class="transition-in">
+  <div class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">SECURE WORKSPACE</p>
+        <h1>Workspace</h1>
+        <p>Everything you need to keep the work moving.</p>
+      </div>
+      <div class="header-actions">
+        <div class="session-info">
+          <span class="session-user" id="session-user">Not signed in</span>
+          <span class="session-active" id="session-active">Active 00:00:00</span>
+        </div>
+        <time id="date" datetime="2026-09-07">September 7, 2026</time>
+        <button id="logout-btn" type="button">Sign out</button>
+      </div>
+    </header>
+    <div class="workspace-layout">
+      <main>
+        <section class="modules" aria-label="Workspace modules">
+          <article class="module">
+            <div><h2>Hours</h2><p>Keep time, capacity, and progress in one place.</p></div>
+            <span class="module-arrow" aria-hidden="true">&#8594;</span>
+          </article>
+          <article class="module">
+            <div><h2>Projects</h2><p>Track active work from first brief to final delivery.</p></div>
+            <span class="module-arrow" aria-hidden="true">&#8594;</span>
+          </article>
+          <article class="module">
+            <div><h2>Store</h2><p>Manage materials, stock, and what the workshop needs.</p></div>
+            <span class="module-arrow" aria-hidden="true">&#8594;</span>
+          </article>
+          <article class="module">
+            <div><h2>Reports</h2><p>Turn daily activity into a clear view of the business.</p></div>
+            <span class="module-arrow" aria-hidden="true">&#8594;</span>
+          </article>
+          <article class="module">
+            <div><h2>Documents</h2><p>Find the files, records, and details behind every job.</p></div>
+            <span class="module-arrow" aria-hidden="true">&#8594;</span>
+          </article>
+        </section>
+      </main>
+      <aside class="chat-panel" aria-labelledby="chat-title">
+        <div class="chat-heading">
+          <div>
+            <span class="chat-kicker">COMMUNICATIONS</span>
+            <h2 id="chat-title">Team chat</h2>
+          </div>
+          <span class="chat-live" id="chat-live">Offline</span>
+        </div>
+        <nav class="chat-channels" aria-label="Chat channels">
+          <button class="chat-channel active" type="button" data-channel="general" aria-pressed="true" disabled># General</button>
+          <button class="chat-channel" type="button" data-channel="projects" aria-pressed="false" disabled># Projects</button>
+          <button class="chat-channel" type="button" data-channel="workshop" aria-pressed="false" disabled># Workshop</button>
+        </nav>
+        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-relevant="additions">
+          <div class="chat-notice">
+            <strong>Sign in to start chatting</strong>
+            <span>Your team messages will appear here.</span>
+          </div>
+        </div>
+        <form class="chat-composer" id="chat-form">
+          <div class="chat-input-row">
+            <label for="chat-input" hidden>Message</label>
+            <textarea id="chat-input" rows="1" maxlength="2000" placeholder="Message #General" disabled></textarea>
+            <button class="chat-send" id="chat-send" type="submit" aria-label="Send message" disabled>&#8593;</button>
+          </div>
+          <p class="chat-feedback" id="chat-feedback">Enter to send · Shift + Enter for a new line</p>
+        </form>
+      </aside>
     </div>
-  </main>
+  </div>
+  <p id="welcome" class="welcome" role="status" aria-live="polite">Loading your workspace...</p>
+  <footer class="copyright">All rights reserved 2026</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script>
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const hasSupabaseConfig = typeof SUPABASE_URL === "string" && SUPABASE_URL.startsWith("http");
+    const client = hasSupabaseConfig
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { detectSessionInUrl: false }
+        })
+      : null;
+    const isWebOrigin = window.location.protocol === "http:" || window.location.protocol === "https:";
+    const sessionUser = document.getElementById("session-user");
+    const sessionActive = document.getElementById("session-active");
+    const appNotice = document.getElementById("welcome");
+    const chatMessages = document.getElementById("chat-messages");
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const chatSend = document.getElementById("chat-send");
+    const chatFeedback = document.getElementById("chat-feedback");
+    const chatLive = document.getElementById("chat-live");
+    const chatChannelButtons = [...document.querySelectorAll(".chat-channel")];
+    let activeTimer;
+    let currentChatUser = null;
+    let currentChatChannel = "general";
+    let chatSubscription = null;
+    let chatRows = [];
 
-    client.auth.getSession().then(({ data }) => {
-      if (!data.session) {
+    function formatActiveTime(milliseconds) {
+      const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    }
+
+    function startActiveTimer() {
+      const storageKey = "workspace-session-start";
+      const savedStart = Number(sessionStorage.getItem(storageKey));
+      const startTime = savedStart || Date.now();
+      sessionStorage.setItem(storageKey, String(startTime));
+      const update = () => {
+        sessionActive.textContent = "Active " + formatActiveTime(Date.now() - startTime);
+      };
+      update();
+      activeTimer = window.setInterval(update, 1000);
+    }
+
+    function setAppNotice(message, type = "info") {
+      appNotice.textContent = message;
+      appNotice.className = "welcome" + (type ? " " + type : "");
+    }
+
+    function setChatStatus(label, state = "") {
+      chatLive.textContent = label;
+      chatLive.className = "chat-live" + (state ? " " + state : "");
+    }
+
+    function showChatNotice(title, detail, isError = false) {
+      chatMessages.replaceChildren();
+      const notice = document.createElement("div");
+      notice.className = "chat-notice" + (isError ? " error" : "");
+      const heading = document.createElement("strong");
+      const copy = document.createElement("span");
+      heading.textContent = title;
+      copy.textContent = detail;
+      notice.append(heading, copy);
+      chatMessages.append(notice);
+    }
+
+    function chatInitials(name) {
+      return String(name || "Team member")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(part => part[0])
+        .join("")
+        .toUpperCase();
+    }
+
+    function chatTimestamp(value) {
+      const date = new Date(value);
+      const today = new Date();
+      const sameDay = date.toDateString() === today.toDateString();
+      return new Intl.DateTimeFormat("en-US", sameDay
+        ? { hour: "numeric", minute: "2-digit" }
+        : { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
+      ).format(date);
+    }
+
+    function createChatMessage(message) {
+      const ownMessage = message.sender_id === currentChatUser?.id;
+      const row = document.createElement("article");
+      row.className = "chat-message" + (ownMessage ? " own" : "");
+      row.dataset.messageId = message.id;
+
+      const avatar = document.createElement("span");
+      avatar.className = "chat-avatar";
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = chatInitials(message.sender_name);
+
+      const copy = document.createElement("div");
+      copy.className = "chat-copy";
+      const meta = document.createElement("div");
+      meta.className = "chat-meta";
+      const author = document.createElement("span");
+      author.className = "chat-author";
+      author.textContent = ownMessage ? "You" : message.sender_name;
+      const time = document.createElement("time");
+      time.dateTime = message.created_at;
+      time.textContent = chatTimestamp(message.created_at);
+      const bubble = document.createElement("p");
+      bubble.className = "chat-bubble";
+      bubble.textContent = message.body;
+      meta.append(author, time);
+      copy.append(meta, bubble);
+      row.append(avatar, copy);
+      return row;
+    }
+
+    function renderChatMessages() {
+      if (!chatRows.length) {
+        showChatNotice(
+          "No messages yet",
+          "Start the conversation in #" + currentChatChannel + "."
+        );
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      chatRows.forEach(message => fragment.append(createChatMessage(message)));
+      chatMessages.replaceChildren(fragment);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addChatMessage(message) {
+      if (message.channel !== currentChatChannel || chatRows.some(row => row.id === message.id)) return;
+      const hadMessages = chatRows.length > 0;
+      chatRows.push(message);
+      if (!hadMessages) chatMessages.replaceChildren();
+      chatMessages.append(createChatMessage(message));
+      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" });
+    }
+
+    async function loadChatMessages(channel) {
+      showChatNotice("Loading messages", "Connecting to your team channel...");
+      const { data, error } = await client
+        .from("chat_messages")
+        .select("id, channel, sender_id, sender_name, body, created_at")
+        .eq("channel", channel)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (channel !== currentChatChannel) return false;
+      if (error) {
+        const needsSetup = error.code === "42P01" || error.code === "PGRST205";
+        showChatNotice(
+          needsSetup ? "Chat setup needed" : "Chat unavailable",
+          needsSetup ? "Run supabase/schema.sql in the Supabase SQL Editor once." : error.message,
+          true
+        );
+        setChatStatus(needsSetup ? "Setup needed" : "Unavailable", "error");
+        setAppNotice(
+          needsSetup
+            ? "Chat setup needed: run supabase/schema.sql in Supabase."
+            : "Chat error: " + error.message,
+          "error"
+        );
+        chatInput.disabled = true;
+        chatSend.disabled = true;
+        return false;
+      }
+
+      chatRows = (data || []).reverse();
+      renderChatMessages();
+      return true;
+    }
+
+    async function subscribeToChat(channel) {
+      if (chatSubscription) {
+        await client.removeChannel(chatSubscription);
+        chatSubscription = null;
+      }
+      setChatStatus("Connecting");
+      chatSubscription = client
+        .channel("team-chat-" + channel + "-" + Date.now())
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "chat_messages", filter: "channel=eq." + channel },
+          payload => addChatMessage(payload.new)
+        )
+        .subscribe(status => {
+          if (channel !== currentChatChannel) return;
+          if (status === "SUBSCRIBED") {
+            setChatStatus("Live", "connected");
+            setAppNotice("Workspace connected. Team chat is live.", "success");
+          }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            setChatStatus("Reconnect", "error");
+            setAppNotice("Chat connection interrupted. Trying to reconnect...", "error");
+          }
+          if (status === "CLOSED") setChatStatus("Offline");
+        });
+    }
+
+    async function selectChatChannel(channel) {
+      if (channel === currentChatChannel && chatRows.length) return;
+      currentChatChannel = channel;
+      chatRows = [];
+      chatChannelButtons.forEach(button => {
+        const isActive = button.dataset.channel === channel;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+      chatInput.placeholder = "Message #" + channel[0].toUpperCase() + channel.slice(1);
+      chatFeedback.textContent = "Enter to send · Shift + Enter for a new line";
+      chatFeedback.classList.remove("error");
+      const loaded = await loadChatMessages(channel);
+      if (loaded) {
+        chatInput.disabled = false;
+        chatSend.disabled = false;
+        await subscribeToChat(channel);
+      }
+    }
+
+    async function initializeChat(user) {
+      currentChatUser = user;
+      chatChannelButtons.forEach(button => { button.disabled = false; });
+      chatInput.disabled = false;
+      chatSend.disabled = false;
+      const loaded = await loadChatMessages(currentChatChannel);
+      if (loaded) await subscribeToChat(currentChatChannel);
+    }
+
+    async function initializeSession() {
+      if (!client || !isWebOrigin) {
         window.location.href = "login.html";
         return;
       }
-      document.getElementById("welcome").textContent =
-        "Најавен си како " + data.session.user.email;
-    });
+
+      const code = new URLSearchParams(window.location.search).get("code");
+      const authError = new URLSearchParams(window.location.search).get("error_description");
+      if (authError) {
+        setAppNotice("Sign-in error: " + authError, "error");
+        return;
+      }
+      if (code) {
+        const { error } = await client.auth.exchangeCodeForSession(code);
+        if (error) {
+          setAppNotice("Sign-in error: " + error.message, "error");
+          return;
+        }
+        window.history.replaceState({}, document.title, "hub.html");
+      }
+
+      const { data } = await client.auth.getSession();
+      if (!data.session) {
+        setAppNotice("No active session was found. Please sign in again.", "error");
+        return;
+      }
+      setAppNotice("Signed in as " + data.session.user.email, "success");
+      sessionUser.textContent = data.session.user.email;
+      startActiveTimer();
+      await initializeChat(data.session.user);
+    }
+
+    initializeSession();
 
     document.getElementById("logout-btn").addEventListener("click", async () => {
-      await client.auth.signOut();
+      window.clearInterval(activeTimer);
+      sessionStorage.removeItem("workspace-session-start");
+      if (chatSubscription && client) await client.removeChannel(chatSubscription);
+      if (client) await client.auth.signOut();
       window.location.href = "login.html";
     });
+
+    chatChannelButtons.forEach(button => {
+      button.addEventListener("click", () => selectChatChannel(button.dataset.channel));
+    });
+
+    chatInput.addEventListener("input", () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 96) + "px";
+    });
+
+    chatInput.addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        chatForm.requestSubmit();
+      }
+    });
+
+    chatForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const body = chatInput.value.trim();
+      if (!body || !currentChatUser || chatInput.disabled) return;
+
+      chatSend.disabled = true;
+      chatFeedback.textContent = "Sending...";
+      chatFeedback.classList.remove("error");
+      const { data, error } = await client
+        .from("chat_messages")
+        .insert({ channel: currentChatChannel, body })
+        .select("id, channel, sender_id, sender_name, body, created_at")
+        .single();
+
+      if (error) {
+        chatFeedback.textContent = "Could not send: " + error.message;
+        chatFeedback.classList.add("error");
+        setAppNotice("Message could not be sent: " + error.message, "error");
+      } else {
+        addChatMessage(data);
+        chatInput.value = "";
+        chatInput.style.height = "auto";
+        chatFeedback.textContent = "Enter to send · Shift + Enter for a new line";
+        chatInput.focus();
+      }
+      chatSend.disabled = chatInput.disabled;
+    });
+
+    document.getElementById("date").textContent = new Intl.DateTimeFormat("en-US", {
+      day: "numeric", month: "long", year: "numeric"
+    }).format(new Date());
+    document.body.addEventListener("animationend", () => document.body.classList.remove("transition-in"), { once: true });
   </script>
 </body>
 </html>
