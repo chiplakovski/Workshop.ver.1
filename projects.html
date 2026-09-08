@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Projects</title>
+<link rel="stylesheet" href="app.css" />
+<style>
+  .filters { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .filters__label { color: var(--faint); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; margin-right: 0.2rem; }
+  .filters__right { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
+
+  #project-table .thead, #project-table .row { grid-template-columns: 92px minmax(0, 1fr) 130px 108px 60px 128px 100px; }
+  .row .name strong { display: block; font-size: 0.8rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .name span { display: block; color: var(--faint); font-size: 0.68rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .dim { color: var(--muted); font-size: 0.73rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .detail__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1px; background: var(--line); }
+  .itemrow {
+    display: grid; grid-template-columns: 28px minmax(0, 1fr) 96px 26px; gap: 10px; align-items: center;
+    width: 100%; padding: 11px 12px; border: 0; border-bottom: 1px solid var(--line);
+    background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  }
+  .itemrow:last-child { border-bottom: 0; }
+  .itemrow:hover { background: var(--deck-2); }
+  .itemrow.selected { background: var(--phosphor-dim); box-shadow: inset 3px 0 0 var(--phosphor); }
+  .itemrow .pos { color: var(--faint); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+  .itemrow .t { min-width: 0; }
+  .itemrow .t strong { display: block; font-size: 0.8rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .itemrow .t span { display: block; color: var(--faint); font-size: 0.66rem; margin-top: 2px; }
+  .itemrow .price { text-align: right; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+  .itemrow .del { color: var(--faint); font-size: 0.9rem; text-align: center; }
+
+  .kindgroup { border: 1px solid var(--line); margin-bottom: 10px; }
+  .kindgroup__head {
+    display: flex; align-items: center; gap: 8px; padding: 8px 11px; background: var(--deck-2);
+    border-bottom: 1px solid var(--line); font-size: 0.6rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--faint);
+  }
+  .kindgroup__head b { margin-left: auto; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; letter-spacing: 0; font-size: 0.72rem; }
+  .lineitem {
+    display: grid; grid-template-columns: minmax(0, 1fr) 74px 58px 92px 96px 26px; gap: 8px; align-items: center;
+    padding: 7px 11px; border-bottom: 1px solid var(--line); font-size: 0.75rem;
+  }
+  .lineitem:last-child { border-bottom: 0; }
+  .lineitem input { padding: 0.3rem 0.4rem; font-size: 0.74rem; width: 100%; }
+  .lineitem .desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .lineitem .unit { color: var(--faint); font-size: 0.7rem; }
+  .lineitem .sum { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .lineitem .del { border: 0; background: transparent; color: var(--faint); cursor: pointer; font-size: 0.95rem; padding: 0; }
+  .lineitem .del:hover { color: var(--danger); }
+  .lineitem__head { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding-bottom: 4px; }
+
+  .addline { display: grid; grid-template-columns: 116px 150px minmax(0, 1fr) 72px 60px 92px auto; gap: 8px; align-items: end; padding: 12px 11px 0; }
+  .addline > div { display: flex; flex-direction: column; }
+  .totals { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--line); background: var(--deck-2); margin-top: 12px; }
+  .totals__row { display: flex; justify-content: space-between; font-size: 0.76rem; color: var(--muted); }
+  .totals__row b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .totals__row--grand { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; font-size: 0.86rem; color: var(--text); }
+  .totals__row--grand b { color: var(--phosphor); }
+
+  #offer-table .thead, #offer-table .row { grid-template-columns: 140px 110px 110px minmax(0, 1fr) 290px; }
+  .offeractions { display: flex; gap: 6px; justify-self: end; align-items: center; }
+  .offeractions .btn { white-space: nowrap; text-decoration: none; }
+  @media (max-width: 1080px) { .detail__grid { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) { .addline { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+  <div class="field" aria-hidden="true">
+    <div class="field__grid"></div>
+    <div class="field__sweep"></div>
+    <div class="field__vignette"></div>
+  </div>
+
+  <div class="shell">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow"><a href="hub.html">&#8592; Workspace</a> // Projects</p>
+        <h1 id="page-title">Projects</h1>
+        <p class="sub" id="page-sub">Every job as one numbered record: the works to carry out, what each one costs, and the offer that goes to the customer.</p>
+      </div>
+      <div class="header-actions">
+        <div class="session-info">
+          <span class="session-user" id="session-user">Not signed in</span>
+          <span class="session-meta" id="session-date"></span>
+        </div>
+        <button class="btn" id="logout-btn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <!-- ---------------- list view ---------------- -->
+    <section class="console" id="view-list">
+      <div class="console__bar">
+        <span class="console__dot"></span><span class="console__dot"></span><span class="console__dot console__dot--live"></span>
+        <span class="console__barTitle">Workspace // Projects</span>
+      </div>
+      <div class="filters">
+        <span class="filters__label">Filter</span>
+        <button class="btn btn--sm active" type="button" data-filter="all">All</button>
+        <button class="btn btn--sm" type="button" data-filter="open">Open</button>
+        <button class="btn btn--sm" type="button" data-filter="quoted">Quoted</button>
+        <button class="btn btn--sm" type="button" data-filter="closed">Closed</button>
+        <span class="filters__right">
+          <label for="search" hidden>Search</label>
+          <input id="search" type="search" placeholder="Number, project, client" autocomplete="off" />
+          <button class="btn btn--primary" id="new-project-btn" type="button">New project</button>
+        </span>
+      </div>
+      <div class="pane">
+        <div class="paneHead">
+          <span class="paneHead__tick"></span><h2>Job register</h2>
+          <span class="count" id="project-count">Loading...</span>
+        </div>
+        <div class="tablewrap">
+          <div class="table" id="project-table">
+            <div class="thead">
+              <span>Number</span><span>Project</span><span>Client</span><span>Status</span><span>Items</span><span>Value ex. VAT</span><span>Due</span>
+            </div>
+            <div id="project-rows"><p class="empty">Loading projects...</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="console__foot">
+        <span><b>&#9679;</b> Click a project to open its items and estimate</span>
+        <span id="list-foot-total"></span>
+      </div>
+    </section>
+
+    <!-- ---------------- detail view ---------------- -->
+    <div id="view-detail" hidden>
+      <section class="console">
+        <div class="console__bar">
+          <span class="console__dot"></span><span class="console__dot"></span><span class="console__dot console__dot--live"></span>
+          <span class="console__barTitle" id="detail-bar">Workspace // Projects</span>
+          <span class="console__barRight"><a href="#" id="back-link" style="color:inherit;text-decoration:none;">&#8592; All projects</a></span>
+        </div>
+        <div class="pane">
+          <div class="paneHead">
+            <span class="paneHead__tick"></span><h2 id="detail-heading">Project</h2>
+            <span class="count">
+              <label for="status-select" hidden>Status</label>
+              <select id="status-select">
+                <option value="quoted">Quoted</option>
+                <option value="accepted">Accepted</option>
+                <option value="in_progress">In progress</option>
+                <option value="on_hold">On hold</option>
+                <option value="done">Done</option>
+                <option value="invoiced">Invoiced</option>
+              </select>
+              <button class="btn btn--sm" id="edit-project-btn" type="button">Edit</button>
+            </span>
+          </div>
+          <p class="sub" id="detail-client" style="margin:0 0 14px;"></p>
+          <dl class="stats" id="detail-stats"></dl>
+        </div>
+      </section>
+
+      <section class="console">
+        <div class="console__bar">
+          <span class="console__dot console__dot--live"></span>
+          <span class="console__barTitle">Items &amp; estimate</span>
+        </div>
+        <div class="detail__grid">
+          <div class="pane">
+            <div class="paneHead">
+              <span class="paneHead__tick"></span><h2>Items</h2>
+              <span class="count"><button class="btn btn--sm" id="add-item-btn" type="button">+ Item</button></span>
+            </div>
+            <div class="table" id="item-list"></div>
+          </div>
+          <div class="pane">
+            <div class="paneHead">
+              <span class="paneHead__tick"></span><h2 id="estimate-heading">Estimate</h2>
+              <span class="count" id="estimate-sub"></span>
+            </div>
+            <div id="estimate-body"><p class="empty">Select an item to price it.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="console">
+        <div class="console__bar">
+          <span class="console__dot console__dot--live"></span>
+          <span class="console__barTitle">Offers</span>
+        </div>
+        <div class="pane">
+          <div class="paneHead">
+            <span class="paneHead__tick"></span><h2>Offers</h2>
+            <span class="count"><button class="btn btn--primary" id="create-offer-btn" type="button">Create offer from estimate</button></span>
+          </div>
+          <div class="tablewrap">
+            <div class="table" id="offer-table">
+              <div class="thead"><span>Offer</span><span>Issued</span><span>Valid until</span><span>Total inc. VAT</span><span>Status</span></div>
+              <div id="offer-rows"></div>
+            </div>
+          </div>
+        </div>
+        <div class="console__foot">
+          <span>An offer freezes today's prices — editing the estimate afterwards does not change it.</span>
+          <span>QR link activates once an offer is marked <b>sent</b></span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- project dialog -->
+  <dialog id="project-dialog">
+    <form method="dialog" id="project-form">
+      <div class="dialog__head"><span class="console__dot console__dot--live"></span><span id="project-dialog-title">New project</span></div>
+      <div class="dialog__body">
+        <div class="formgrid">
+          <div><label class="fieldlabel" for="f-number">Project number</label><input id="f-number" required maxlength="40" /></div>
+          <div><label class="fieldlabel" for="f-due">Due date</label><input id="f-due" type="date" /></div>
+          <div class="wide"><label class="fieldlabel" for="f-name">Project name</label><input id="f-name" required maxlength="160" /></div>
+          <div><label class="fieldlabel" for="f-client">Client</label><input id="f-client" maxlength="120" /></div>
+          <div><label class="fieldlabel" for="f-client-org">Client org. number</label><input id="f-client-org" maxlength="40" /></div>
+          <div class="wide"><label class="fieldlabel" for="f-client-address">Client address</label><input id="f-client-address" maxlength="200" /></div>
+          <div><label class="fieldlabel" for="f-contact">Client contact</label><input id="f-contact" maxlength="120" /></div>
+          <div><label class="fieldlabel" for="f-site">Site / vessel</label><input id="f-site" maxlength="120" /></div>
+          <div><label class="fieldlabel" for="f-lead">Lead</label><input id="f-lead" maxlength="80" /></div>
+          <div class="wide"><label class="fieldlabel" for="f-notes">Notes</label><textarea id="f-notes" rows="2" maxlength="1000"></textarea></div>
+        </div>
+      </div>
+      <div class="dialog__foot">
+        <button class="btn" value="cancel" type="submit" formnovalidate>Cancel</button>
+        <button class="btn btn--primary" value="save" type="submit">Save project</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- item dialog -->
+  <dialog id="item-dialog">
+    <form method="dialog" id="item-form">
+      <div class="dialog__head"><span class="console__dot console__dot--live"></span><span id="item-dialog-title">New item</span></div>
+      <div class="dialog__body">
+        <div class="formgrid">
+          <div class="wide"><label class="fieldlabel" for="i-title">What is to be done</label><input id="i-title" required maxlength="160" /></div>
+          <div class="wide"><label class="fieldlabel" for="i-desc">Description for the offer</label><textarea id="i-desc" rows="2" maxlength="1000"></textarea></div>
+          <div><label class="fieldlabel" for="i-qty">Quantity</label><input id="i-qty" type="number" step="0.01" min="0" value="1" /></div>
+          <div><label class="fieldlabel" for="i-unit">Unit</label><input id="i-unit" maxlength="16" value="post" /></div>
+          <div><label class="fieldlabel" for="i-margin">Margin %</label><input id="i-margin" type="number" step="0.1" min="0" value="15" /></div>
+        </div>
+      </div>
+      <div class="dialog__foot">
+        <button class="btn" value="cancel" type="submit" formnovalidate>Cancel</button>
+        <button class="btn btn--primary" value="save" type="submit">Save item</button>
+      </div>
+    </form>
+  </dialog>
+
+  <p id="notice" class="notice" role="status" aria-live="polite"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const hasSupabaseConfig = typeof SUPABASE_URL === "string" && SUPABASE_URL.startsWith("http");
+    const client = hasSupabaseConfig
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { detectSessionInUrl: false } })
+      : null;
+    const isWebOrigin = window.location.protocol === "http:" || window.location.protocol === "https:";
+
+    const KINDS = [
+      ["labor", "Labour"],
+      ["machine", "Machine / hour"],
+      ["transport", "Transport"],
+      ["logistics", "Logistics"],
+      ["material", "Material"],
+      ["subcontractor", "Subcontractor"],
+      ["other", "Other"]
+    ];
+    const KIND_LABEL = Object.fromEntries(KINDS);
+    const STATUS_LABEL = {
+      quoted: "Quoted", accepted: "Accepted", in_progress: "In progress",
+      on_hold: "On hold", done: "Done", invoiced: "Invoiced"
+    };
+    const STATUS_CHIP = {
+      quoted: "chip--idle", accepted: "chip--good", in_progress: "chip--good",
+      on_hold: "chip--warn", done: "chip--neutral", invoiced: "chip--neutral"
+    };
+    const OFFER_CHIP = {
+      draft: "chip--idle", sent: "chip--warn", accepted: "chip--good",
+      declined: "chip--bad", expired: "chip--neutral"
+    };
+
+    const state = {
+      user: null, settings: null, rates: [], projects: [],
+      project: null, items: [], lines: {}, offers: [],
+      selectedItem: null, filter: "all", query: "", isAdmin: false
+    };
+
+    const el = id => document.getElementById(id);
+    const notice = el("notice");
+
+    function say(message, type = "") {
+      notice.textContent = message;
+      notice.className = "notice" + (type ? " " + type : "");
+      if (type === "success") window.setTimeout(() => { if (notice.textContent === message) notice.textContent = ""; }, 4000);
+    }
+    function fail(context, error) {
+      console.error(context, error);
+      say(context + ": " + (error?.message || "unknown error"), "error");
+    }
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const money = n => new Intl.NumberFormat("sv-SE", {
+      style: "currency", currency: state.settings?.currency || "SEK", maximumFractionDigits: 2
+    }).format(Number(n) || 0);
+    const round2 = n => Math.round((Number(n) || 0) * 100) / 100;
+
+    /* ---------- pricing ---------- */
+    const lineTotal = line => round2(Number(line.quantity) * Number(line.unit_price));
+    const itemCost = item => round2((state.lines[item.id] || []).reduce((sum, l) => sum + lineTotal(l), 0));
+    const itemUnitPrice = item => round2(itemCost(item) * (1 + Number(item.margin_pct) / 100));
+    const itemTotal = item => round2(itemUnitPrice(item) * Number(item.quantity));
+    const projectSubtotal = () => round2(state.items.reduce((sum, i) => sum + itemTotal(i), 0));
+    const vatRate = () => Number(state.settings?.vat_rate ?? 25);
+
+    /* ---------- loading ---------- */
+    async function loadReference() {
+      const [{ data: settings }, { data: rates }, { data: profile }] = await Promise.all([
+        client.from("company_settings").select("*").maybeSingle(),
+        client.from("rate_cards").select("*").eq("active", true).order("kind").order("name"),
+        client.from("profiles").select("role").eq("id", state.user.id).maybeSingle()
+      ]);
+      state.settings = settings || { vat_rate: 25, currency: "SEK", offer_validity_days: 30 };
+      state.rates = rates || [];
+      state.isAdmin = profile?.role === "admin";
+    }
+
+    async function loadProjects() {
+      const { data, error } = await client
+        .from("projects")
+        .select("*, project_items(id, quantity, margin_pct, estimate_lines(quantity, unit_price))")
+        .order("created_at", { ascending: false });
+      if (error) return fail("Could not load projects", error);
+      state.projects = data || [];
+      renderProjects();
+    }
+
+    function listValue(project) {
+      return round2((project.project_items || []).reduce((sum, item) => {
+        const cost = (item.estimate_lines || []).reduce((s, l) => s + Number(l.quantity) * Number(l.unit_price), 0);
+        return sum + cost * (1 + Number(item.margin_pct) / 100) * Number(item.quantity);
+      }, 0));
+    }
+
+    function matchesFilter(project) {
+      if (state.filter === "open") return ["accepted", "in_progress", "on_hold"].includes(project.status);
+      if (state.filter === "quoted") return project.status === "quoted";
+      if (state.filter === "closed") return ["done", "invoiced"].includes(project.status);
+      return true;
+    }
+
+    function renderProjects() {
+      const rows = el("project-rows");
+      const list = state.projects.filter(p => matchesFilter(p) && (
+        !state.query ||
+        (p.number + " " + p.name + " " + (p.client_name || "") + " " + (p.site || "")).toLowerCase().includes(state.query)
+      ));
+      el("project-count").textContent = list.length + (list.length === 1 ? " project" : " projects");
+      el("list-foot-total").textContent = "Open value " + money(
+        list.filter(p => !["done", "invoiced"].includes(p.status)).reduce((s, p) => s + listValue(p), 0)
+      ) + " ex. VAT";
+
+      if (!list.length) {
+        rows.innerHTML = '<p class="empty">No projects yet. Create the first one with <strong>New project</strong>.</p>';
+        return;
+      }
+      rows.replaceChildren(...list.map(p => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "row";
+        row.innerHTML = `
+          <span class="num">${esc(p.number)}</span>
+          <span class="name"><strong>${esc(p.name)}</strong><span>${esc(p.site || "—")}</span></span>
+          <span class="dim">${esc(p.client_name || "—")}</span>
+          <span class="chip ${STATUS_CHIP[p.status]}">${STATUS_LABEL[p.status]}</span>
+          <span class="num dim">${(p.project_items || []).length}</span>
+          <span class="num">${money(listValue(p))}</span>
+          <span class="dim num">${p.due_date ? esc(p.due_date) : "—"}</span>`;
+        row.addEventListener("click", () => openProject(p.id));
+        return row;
+      }));
+    }
+
+    /* ---------- project detail ---------- */
+    async function openProject(id) {
+      window.location.hash = "p=" + id;
+    }
+
+    async function loadProject(id) {
+      const [{ data: project, error }, { data: items }, { data: offers }] = await Promise.all([
+        client.from("projects").select("*").eq("id", id).maybeSingle(),
+        client.from("project_items").select("*").eq("project_id", id).order("position"),
+        client.from("offers").select("*").eq("project_id", id).order("version", { ascending: false })
+      ]);
+      if (error || !project) return fail("Could not open project", error || { message: "not found" });
+
+      state.project = project;
+      state.items = items || [];
+      state.offers = offers || [];
+      state.lines = {};
+      if (state.items.length) {
+        const { data: lines } = await client
+          .from("estimate_lines")
+          .select("*")
+          .in("item_id", state.items.map(i => i.id))
+          .order("position");
+        (lines || []).forEach(line => (state.lines[line.item_id] ||= []).push(line));
+      }
+      if (!state.items.some(i => i.id === state.selectedItem)) {
+        state.selectedItem = state.items[0]?.id || null;
+      }
+      renderDetail();
+    }
+
+    function renderDetail() {
+      const p = state.project;
+      el("page-title").textContent = p.number + " — " + p.name;
+      el("page-sub").textContent = p.notes || "Items, estimate and offers for this project.";
+      el("detail-bar").textContent = "Workspace // Projects // " + p.number;
+      el("detail-heading").textContent = p.name;
+      el("status-select").value = p.status;
+      el("detail-client").textContent = [p.client_name, p.site, p.lead_name && ("Lead: " + p.lead_name),
+        p.due_date && ("Due " + p.due_date)].filter(Boolean).join(" · ") || "No client details yet.";
+
+      const subtotal = projectSubtotal();
+      const cost = round2(state.items.reduce((s, i) => s + itemCost(i) * Number(i.quantity), 0));
+      const latest = state.offers[0];
+      el("detail-stats").innerHTML = `
+        <div class="stat"><dt>Items</dt><dd>${state.items.length}</dd></div>
+        <div class="stat"><dt>Cost</dt><dd style="font-size:0.9rem;">${money(cost)}</dd></div>
+        <div class="stat"><dt>Offer value ex. VAT</dt><dd style="font-size:0.9rem;">${money(subtotal)}</dd></div>
+        <div class="stat"><dt>Margin</dt><dd>${cost ? Math.round(((subtotal - cost) / cost) * 100) : 0}<small>%</small></dd></div>
+        <div class="stat"><dt>Latest offer</dt><dd style="font-size:0.9rem;">${latest ? esc(latest.offer_number) : "—"}</dd></div>`;
+
+      renderItems();
+      renderEstimate();
+      renderOffers();
+    }
+
+    function renderItems() {
+      const list = el("item-list");
+      if (!state.items.length) {
+        list.innerHTML = '<p class="empty">No items yet. Add the works to be carried out.</p>';
+        return;
+      }
+      list.replaceChildren(...state.items.map((item, index) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "itemrow" + (item.id === state.selectedItem ? " selected" : "");
+        row.innerHTML = `
+          <span class="pos">${String(index + 1).padStart(2, "0")}</span>
+          <span class="t"><strong>${esc(item.title)}</strong>
+            <span>${Number(item.quantity)} ${esc(item.unit)} · margin ${Number(item.margin_pct)}% · cost ${money(itemCost(item))}</span></span>
+          <span class="price">${money(itemTotal(item))}</span>
+          <span class="del" title="Remove item" data-del="${item.id}">&#215;</span>`;
+        row.addEventListener("click", event => {
+          if (event.target.dataset.del) { removeItem(item); return; }
+          state.selectedItem = item.id;
+          renderItems();
+          renderEstimate();
+        });
+        row.addEventListener("dblclick", () => openItemDialog(item));
+        return row;
+      }));
+    }
+
+    function renderEstimate() {
+      const body = el("estimate-body");
+      const item = state.items.find(i => i.id === state.selectedItem);
+      if (!item) {
+        el("estimate-heading").textContent = "Estimate";
+        el("estimate-sub").textContent = "";
+        body.innerHTML = '<p class="empty">Select an item to price it.</p>';
+        return;
+      }
+      el("estimate-heading").textContent = "Estimate — " + item.title;
+      el("estimate-sub").innerHTML = `<button class="btn btn--sm" type="button" id="edit-item-btn">Edit item</button>`;
+
+      const lines = state.lines[item.id] || [];
+      const groups = KINDS.map(([kind, label]) => {
+        const kindLines = lines.filter(l => l.kind === kind);
+        if (!kindLines.length) return "";
+        const sum = kindLines.reduce((s, l) => s + lineTotal(l), 0);
+        return `
+          <div class="kindgroup">
+            <div class="kindgroup__head">${label}<b>${money(sum)}</b></div>
+            <div class="lineitem lineitem__head"><span>Description</span><span>Qty</span><span>Unit</span><span>Unit price</span><span style="text-align:right;">Sum</span><span></span></div>
+            ${kindLines.map(l => `
+              <div class="lineitem" data-line="${l.id}">
+                <span class="desc" title="${esc(l.description)}">${esc(l.description || "—")}</span>
+                <input class="num" type="number" step="0.01" min="0" value="${Number(l.quantity)}" data-field="quantity" aria-label="Quantity" />
+                <span class="unit">${esc(l.unit)}</span>
+                <input class="num" type="number" step="0.01" min="0" value="${Number(l.unit_price)}" data-field="unit_price" aria-label="Unit price" />
+                <span class="sum">${money(lineTotal(l))}</span>
+                <button class="del" type="button" title="Remove line" data-remove="${l.id}">&#215;</button>
+              </div>`).join("")}
+          </div>`;
+      }).join("");
+
+      const cost = itemCost(item);
+      body.innerHTML = `
+        ${groups || '<p class="empty">No estimate lines yet — add the first one below.</p>'}
+        <form class="addline" id="add-line-form">
+          <div><label class="fieldlabel" for="l-kind">Type</label>
+            <select id="l-kind">${KINDS.map(([k, label]) => `<option value="${k}">${label}</option>`).join("")}</select></div>
+          <div><label class="fieldlabel" for="l-rate">From rate card</label>
+            <select id="l-rate"><option value="">— free entry —</option></select></div>
+          <div><label class="fieldlabel" for="l-desc">Description</label><input id="l-desc" maxlength="160" required /></div>
+          <div><label class="fieldlabel" for="l-qty">Qty</label><input id="l-qty" type="number" step="0.01" min="0" value="1" required /></div>
+          <div><label class="fieldlabel" for="l-unit">Unit</label><input id="l-unit" maxlength="12" value="h" /></div>
+          <div><label class="fieldlabel" for="l-price">Unit price</label><input id="l-price" type="number" step="0.01" min="0" value="0" required /></div>
+          <div><button class="btn btn--primary" type="submit">Add</button></div>
+        </form>
+        <div class="totals">
+          <div class="totals__row"><span>Cost, one ${esc(item.unit)}</span><b>${money(cost)}</b></div>
+          <div class="totals__row"><span>Margin ${Number(item.margin_pct)}%</span><b>${money(round2(itemUnitPrice(item) - cost))}</b></div>
+          <div class="totals__row"><span>Price per ${esc(item.unit)}</span><b>${money(itemUnitPrice(item))}</b></div>
+          <div class="totals__row totals__row--grand"><span>Item total · ${Number(item.quantity)} ${esc(item.unit)}</span><b>${money(itemTotal(item))}</b></div>
+        </div>`;
+
+      el("edit-item-btn").addEventListener("click", () => openItemDialog(item));
+      wireEstimateEvents(item);
+    }
+
+    function wireEstimateEvents(item) {
+      const kindSelect = el("l-kind");
+      const rateSelect = el("l-rate");
+      const fillRates = () => {
+        const options = state.rates.filter(r => r.kind === kindSelect.value);
+        rateSelect.innerHTML = '<option value="">— free entry —</option>' +
+          options.map(r => `<option value="${r.id}">${esc(r.name)} — ${money(r.unit_price)}/${esc(r.unit)}</option>`).join("");
+      };
+      fillRates();
+      kindSelect.addEventListener("change", fillRates);
+      rateSelect.addEventListener("change", () => {
+        const rate = state.rates.find(r => r.id === rateSelect.value);
+        if (!rate) return;
+        el("l-desc").value = rate.name;
+        el("l-unit").value = rate.unit;
+        el("l-price").value = rate.unit_price;
+      });
+
+      el("add-line-form").addEventListener("submit", async event => {
+        event.preventDefault();
+        const lines = state.lines[item.id] || [];
+        const { error } = await client.from("estimate_lines").insert({
+          item_id: item.id,
+          kind: kindSelect.value,
+          description: el("l-desc").value.trim(),
+          quantity: Number(el("l-qty").value),
+          unit: el("l-unit").value.trim() || "h",
+          unit_price: Number(el("l-price").value),
+          position: lines.length + 1
+        });
+        if (error) return fail("Could not add line", error);
+        await loadProject(state.project.id);
+        say("Line added.", "success");
+      });
+
+      document.querySelectorAll("#estimate-body [data-remove]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const { error } = await client.from("estimate_lines").delete().eq("id", button.dataset.remove);
+          if (error) return fail("Could not remove line", error);
+          await loadProject(state.project.id);
+        });
+      });
+
+      document.querySelectorAll("#estimate-body .lineitem[data-line] input").forEach(input => {
+        input.addEventListener("change", async () => {
+          const id = input.closest("[data-line]").dataset.line;
+          const patch = { [input.dataset.field]: Number(input.value) };
+          const { error } = await client.from("estimate_lines").update(patch).eq("id", id);
+          if (error) return fail("Could not update line", error);
+          await loadProject(state.project.id);
+        });
+      });
+    }
+
+    function renderOffers() {
+      const rows = el("offer-rows");
+      if (!state.offers.length) {
+        rows.innerHTML = '<p class="empty">No offer yet. Price the items, then create one.</p>';
+        return;
+      }
+      rows.replaceChildren(...state.offers.map(offer => {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.style.cursor = "default";
+        row.innerHTML = `
+          <span class="num">${esc(offer.offer_number)}</span>
+          <span class="num dim">${esc(offer.issued_on)}</span>
+          <span class="num dim">${esc(offer.valid_until || "—")}</span>
+          <span class="num">${money(offer.total)}</span>
+          <span class="offeractions">
+            <span class="chip ${OFFER_CHIP[offer.status]}">${offer.status}</span>
+            <a class="btn btn--sm" href="offer.html?id=${offer.id}" target="_blank" rel="noopener">Open &amp; print</a>
+            ${offer.status === "draft" ? `<button class="btn btn--sm" type="button" data-send="${offer.id}">Mark sent</button>` : ""}
+            ${offer.status === "sent" ? `<button class="btn btn--sm" type="button" data-accept="${offer.id}">Accepted</button>` : ""}
+          </span>`;
+        return row;
+      }));
+      rows.querySelectorAll("[data-send]").forEach(b => b.addEventListener("click", () => setOfferStatus(b.dataset.send, "sent")));
+      rows.querySelectorAll("[data-accept]").forEach(b => b.addEventListener("click", () => setOfferStatus(b.dataset.accept, "accepted")));
+    }
+
+    async function setOfferStatus(id, status) {
+      const { error } = await client.from("offers").update({ status }).eq("id", id);
+      if (error) return fail("Could not update offer", error);
+      await loadProject(state.project.id);
+      say("Offer marked " + status + ".", "success");
+    }
+
+    /* ---------- writes ---------- */
+    function suggestNumber() {
+      const latest = state.projects.map(p => p.number).find(n => /\d+$/.test(n));
+      if (!latest) return "";
+      return latest.replace(/(\d+)$/, digits => String(Number(digits) + 1).padStart(digits.length, "0"));
+    }
+
+    function openProjectDialog(project) {
+      const dialog = el("project-dialog");
+      el("project-dialog-title").textContent = project ? "Edit project" : "New project";
+      el("f-number").value = project?.number || suggestNumber();
+      el("f-name").value = project?.name || "";
+      el("f-client").value = project?.client_name || "";
+      el("f-client-org").value = project?.client_org_number || "";
+      el("f-client-address").value = project?.client_address || "";
+      el("f-contact").value = project?.client_contact || "";
+      el("f-site").value = project?.site || "";
+      el("f-lead").value = project?.lead_name || "";
+      el("f-due").value = project?.due_date || "";
+      el("f-notes").value = project?.notes || "";
+      dialog.returnValue = "";
+      dialog.showModal();
+      dialog.onclose = async () => {
+        if (dialog.returnValue !== "save") return;
+        const payload = {
+          number: el("f-number").value.trim(),
+          name: el("f-name").value.trim(),
+          client_name: el("f-client").value.trim(),
+          client_org_number: el("f-client-org").value.trim(),
+          client_address: el("f-client-address").value.trim(),
+          client_contact: el("f-contact").value.trim(),
+          site: el("f-site").value.trim(),
+          lead_name: el("f-lead").value.trim(),
+          due_date: el("f-due").value || null,
+          notes: el("f-notes").value.trim()
+        };
+        if (!payload.number || !payload.name) return say("Project number and name are required.", "error");
+        if (project) {
+          const { error } = await client.from("projects").update(payload).eq("id", project.id);
+          if (error) return fail("Could not save project", error);
+          await loadProject(project.id);
+          say("Project saved.", "success");
+        } else {
+          payload.created_by = state.user.id;
+          const { data, error } = await client.from("projects").insert(payload).select("id").single();
+          if (error) return fail("Could not create project", error);
+          await loadProjects();
+          window.location.hash = "p=" + data.id;
+          say("Project created.", "success");
+        }
+      };
+    }
+
+    function openItemDialog(item) {
+      const dialog = el("item-dialog");
+      el("item-dialog-title").textContent = item ? "Edit item" : "New item";
+      el("i-title").value = item?.title || "";
+      el("i-desc").value = item?.description || "";
+      el("i-qty").value = item?.quantity ?? 1;
+      el("i-unit").value = item?.unit || "post";
+      el("i-margin").value = item?.margin_pct ?? 15;
+      dialog.returnValue = "";
+      dialog.showModal();
+      dialog.onclose = async () => {
+        if (dialog.returnValue !== "save") return;
+        const payload = {
+          title: el("i-title").value.trim(),
+          description: el("i-desc").value.trim(),
+          quantity: Number(el("i-qty").value) || 1,
+          unit: el("i-unit").value.trim() || "post",
+          margin_pct: Number(el("i-margin").value) || 0
+        };
+        if (!payload.title) return say("The item needs a title.", "error");
+        if (item) {
+          const { error } = await client.from("project_items").update(payload).eq("id", item.id);
+          if (error) return fail("Could not save item", error);
+        } else {
+          payload.project_id = state.project.id;
+          payload.position = state.items.length + 1;
+          const { data, error } = await client.from("project_items").insert(payload).select("id").single();
+          if (error) return fail("Could not add item", error);
+          state.selectedItem = data.id;
+        }
+        await loadProject(state.project.id);
+        say("Item saved.", "success");
+      };
+    }
+
+    async function removeItem(item) {
+      if (!window.confirm("Remove item \"" + item.title + "\" and its estimate lines?")) return;
+      const { error } = await client.from("project_items").delete().eq("id", item.id);
+      if (error) return fail("Could not remove item", error);
+      if (state.selectedItem === item.id) state.selectedItem = null;
+      await loadProject(state.project.id);
+    }
+
+    async function createOffer() {
+      if (!state.items.length) return say("Add at least one item before creating an offer.", "error");
+      const settings = state.settings;
+      const subtotal = projectSubtotal();
+      const rate = vatRate();
+      const vatAmount = round2(subtotal * rate / 100);
+      const version = (state.offers[0]?.version || 0) + 1;
+      const validDays = Number(settings.offer_validity_days || 30);
+      const validUntil = new Date(Date.now() + validDays * 86400000).toISOString().slice(0, 10);
+
+      const snapshot = {
+        company: settings,
+        project: {
+          number: state.project.number, name: state.project.name, site: state.project.site,
+          client_name: state.project.client_name, client_org_number: state.project.client_org_number,
+          client_address: state.project.client_address, client_contact: state.project.client_contact,
+          lead_name: state.project.lead_name
+        },
+        items: state.items.map((item, index) => ({
+          position: index + 1,
+          title: item.title,
+          description: item.description,
+          quantity: Number(item.quantity),
+          unit: item.unit,
+          unit_price: itemUnitPrice(item),
+          total: itemTotal(item)
+        })),
+        issued_by: state.user.email
+      };
+
+      const { error } = await client.from("offers").insert({
+        project_id: state.project.id,
+        offer_number: state.project.number + "-" + version,
+        version,
+        valid_until: validUntil,
+        vat_rate: rate,
+        currency: settings.currency || "SEK",
+        subtotal, vat_amount: vatAmount, total: round2(subtotal + vatAmount),
+        snapshot,
+        created_by: state.user.id
+      });
+      if (error) return fail("Could not create offer", error);
+      await loadProject(state.project.id);
+      say("Offer created as draft — open it to print.", "success");
+    }
+
+    /* ---------- routing & wiring ---------- */
+    async function route() {
+      const match = window.location.hash.match(/p=([0-9a-f-]{36})/i);
+      if (match) {
+        el("view-list").hidden = true;
+        el("view-detail").hidden = false;
+        await loadProject(match[1]);
+      } else {
+        el("view-detail").hidden = true;
+        el("view-list").hidden = false;
+        state.project = null;
+        el("page-title").textContent = "Projects";
+        el("page-sub").textContent = "Every job as one numbered record: the works to carry out, what each one costs, and the offer that goes to the customer.";
+        await loadProjects();
+      }
+    }
+
+    async function start() {
+      if (!client || !isWebOrigin) { window.location.href = "login.html"; return; }
+      const { data } = await client.auth.getSession();
+      if (!data.session) { window.location.href = "login.html"; return; }
+      state.user = data.session.user;
+      el("session-user").textContent = state.user.email;
+      el("session-date").textContent = new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+      await loadReference();
+      await route();
+    }
+
+    window.addEventListener("hashchange", route);
+    el("new-project-btn").addEventListener("click", () => openProjectDialog(null));
+    el("edit-project-btn").addEventListener("click", () => openProjectDialog(state.project));
+    el("add-item-btn").addEventListener("click", () => openItemDialog(null));
+    el("create-offer-btn").addEventListener("click", createOffer);
+    el("back-link").addEventListener("click", event => { event.preventDefault(); window.location.hash = ""; });
+    el("status-select").addEventListener("change", async event => {
+      const { error } = await client.from("projects").update({ status: event.target.value }).eq("id", state.project.id);
+      if (error) return fail("Could not change status", error);
+      state.project.status = event.target.value;
+      say("Status updated.", "success");
+    });
+    el("search").addEventListener("input", event => { state.query = event.target.value.trim().toLowerCase(); renderProjects(); });
+    document.querySelectorAll("[data-filter]").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll("[data-filter]").forEach(b => b.classList.toggle("active", b === button));
+      state.filter = button.dataset.filter;
+      renderProjects();
+    }));
+    el("logout-btn").addEventListener("click", async () => {
+      if (client) await client.auth.signOut();
+      window.location.href = "login.html";
+    });
+
+    start();
+  </script>
+</body>
+</html>

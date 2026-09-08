@@ -120,3 +120,306 @@ begin
   end if;
 end
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Projects module
+--
+-- A project carries a unique number that everything else refers to. Each
+-- project holds items (the works to be carried out); each item is priced from
+-- estimate lines (labour, machine hours, transport, logistics, material,
+-- subcontractor) plus a margin. An offer freezes those prices into a snapshot
+-- so an offer already sent to a customer never changes when the estimate is
+-- edited afterwards.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = (select auth.uid()) and role = 'admin'
+  );
+$$;
+
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+-- Company details printed on every offer. Single row, edited by an admin.
+create table if not exists public.company_settings (
+  id boolean primary key default true check (id),
+  name text not null default 'Your company AB',
+  address text default '',
+  postal_code text default '',
+  city text default '',
+  country text default 'Sverige',
+  org_number text default '',
+  vat_number text default '',
+  phone text default '',
+  email text default '',
+  website text default '',
+  f_tax boolean not null default true,
+  bankgiro text default '',
+  iban text default '',
+  bic text default '',
+  vat_rate numeric(5,2) not null default 25,
+  currency text not null default 'SEK',
+  offer_validity_days integer not null default 30,
+  payment_terms text default '30 dagar netto',
+  delivery_terms text default '',
+  late_interest_terms text default 'Dröjsmålsränta enligt räntelagen (referensränta + 8 %).',
+  offer_footer text default 'Reservation för prisändringar på material. Offerten baseras på ovan angivet underlag.',
+  updated_at timestamptz not null default now()
+);
+
+insert into public.company_settings (id) values (true) on conflict (id) do nothing;
+
+alter table public.company_settings enable row level security;
+
+drop policy if exists "Team can read company settings" on public.company_settings;
+create policy "Team can read company settings"
+  on public.company_settings for select to authenticated using (true);
+
+drop policy if exists "Admins can update company settings" on public.company_settings;
+create policy "Admins can update company settings"
+  on public.company_settings for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+drop trigger if exists touch_company_settings on public.company_settings;
+create trigger touch_company_settings
+  before update on public.company_settings
+  for each row execute function public.touch_updated_at();
+
+-- Standard hourly rates and unit prices to pick from while estimating.
+create table if not exists public.rate_cards (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in
+    ('labor', 'machine', 'transport', 'logistics', 'material', 'subcontractor', 'other')),
+  name text not null,
+  unit text not null default 'h',
+  unit_price numeric(12,2) not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists rate_cards_kind_idx on public.rate_cards (kind, name);
+
+alter table public.rate_cards enable row level security;
+
+drop policy if exists "Team can read rate cards" on public.rate_cards;
+create policy "Team can read rate cards"
+  on public.rate_cards for select to authenticated using (true);
+
+drop policy if exists "Admins can write rate cards" on public.rate_cards;
+create policy "Admins can write rate cards"
+  on public.rate_cards for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+insert into public.rate_cards (kind, name, unit, unit_price)
+select * from (values
+  ('labor', 'Welder / fitter', 'h', 750),
+  ('labor', 'Foreman', 'h', 890),
+  ('labor', 'Helper', 'h', 620),
+  ('machine', 'Mobile crane', 'h', 1450),
+  ('machine', 'Welding rig', 'h', 320),
+  ('machine', 'Man lift', 'h', 480),
+  ('transport', 'Van, per km', 'km', 22),
+  ('transport', 'Truck transport', 'trip', 3200),
+  ('logistics', 'Scaffolding, per day', 'day', 950),
+  ('logistics', 'Waste handling', 'post', 1500)
+) as seed(kind, name, unit, unit_price)
+where not exists (select 1 from public.rate_cards);
+
+-- Projects.
+create table if not exists public.projects (
+  id uuid primary key default gen_random_uuid(),
+  number text not null unique,
+  name text not null,
+  client_name text default '',
+  client_org_number text default '',
+  client_address text default '',
+  client_contact text default '',
+  site text default '',
+  status text not null default 'quoted' check (status in
+    ('quoted', 'accepted', 'in_progress', 'on_hold', 'done', 'invoiced')),
+  lead_name text default '',
+  due_date date,
+  notes text default '',
+  created_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists projects_status_idx on public.projects (status, created_at desc);
+
+alter table public.projects enable row level security;
+
+drop policy if exists "Team can read projects" on public.projects;
+create policy "Team can read projects"
+  on public.projects for select to authenticated using (true);
+
+drop policy if exists "Team can create projects" on public.projects;
+create policy "Team can create projects"
+  on public.projects for insert to authenticated with check (true);
+
+drop policy if exists "Team can update projects" on public.projects;
+create policy "Team can update projects"
+  on public.projects for update to authenticated using (true) with check (true);
+
+drop policy if exists "Admins can delete projects" on public.projects;
+create policy "Admins can delete projects"
+  on public.projects for delete to authenticated using (public.is_admin());
+
+drop trigger if exists touch_projects on public.projects;
+create trigger touch_projects
+  before update on public.projects
+  for each row execute function public.touch_updated_at();
+
+-- Items: the works to be carried out inside a project.
+create table if not exists public.project_items (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects (id) on delete cascade,
+  position integer not null default 1,
+  title text not null,
+  description text default '',
+  quantity numeric(12,2) not null default 1,
+  unit text not null default 'post',
+  margin_pct numeric(5,2) not null default 15,
+  status text not null default 'planned' check (status in ('planned', 'in_progress', 'done')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists project_items_project_idx on public.project_items (project_id, position);
+
+alter table public.project_items enable row level security;
+
+drop policy if exists "Team can read items" on public.project_items;
+create policy "Team can read items"
+  on public.project_items for select to authenticated using (true);
+
+drop policy if exists "Team can write items" on public.project_items;
+create policy "Team can write items"
+  on public.project_items for all to authenticated using (true) with check (true);
+
+drop trigger if exists touch_project_items on public.project_items;
+create trigger touch_project_items
+  before update on public.project_items
+  for each row execute function public.touch_updated_at();
+
+-- Estimate lines: what one unit of an item costs, before margin.
+create table if not exists public.estimate_lines (
+  id uuid primary key default gen_random_uuid(),
+  item_id uuid not null references public.project_items (id) on delete cascade,
+  kind text not null check (kind in
+    ('labor', 'machine', 'transport', 'logistics', 'material', 'subcontractor', 'other')),
+  description text not null default '',
+  quantity numeric(12,2) not null default 0,
+  unit text not null default 'h',
+  unit_price numeric(12,2) not null default 0,
+  line_total numeric(14,2) generated always as (round(quantity * unit_price, 2)) stored,
+  position integer not null default 1,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists estimate_lines_item_idx on public.estimate_lines (item_id, position);
+
+alter table public.estimate_lines enable row level security;
+
+drop policy if exists "Team can read estimate lines" on public.estimate_lines;
+create policy "Team can read estimate lines"
+  on public.estimate_lines for select to authenticated using (true);
+
+drop policy if exists "Team can write estimate lines" on public.estimate_lines;
+create policy "Team can write estimate lines"
+  on public.estimate_lines for all to authenticated using (true) with check (true);
+
+-- Offers: a frozen, numbered copy of the priced items at the moment of issue.
+create table if not exists public.offers (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects (id) on delete cascade,
+  offer_number text not null unique,
+  version integer not null default 1,
+  issued_on date not null default current_date,
+  valid_until date,
+  vat_rate numeric(5,2) not null default 25,
+  currency text not null default 'SEK',
+  subtotal numeric(14,2) not null default 0,
+  vat_amount numeric(14,2) not null default 0,
+  total numeric(14,2) not null default 0,
+  status text not null default 'draft' check (status in
+    ('draft', 'sent', 'accepted', 'declined', 'expired')),
+  public_token uuid not null default gen_random_uuid(),
+  snapshot jsonb not null default '{}'::jsonb,
+  created_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists offers_project_idx on public.offers (project_id, version desc);
+create unique index if not exists offers_public_token_idx on public.offers (public_token);
+
+alter table public.offers enable row level security;
+
+drop policy if exists "Team can read offers" on public.offers;
+create policy "Team can read offers"
+  on public.offers for select to authenticated using (true);
+
+drop policy if exists "Team can write offers" on public.offers;
+create policy "Team can write offers"
+  on public.offers for all to authenticated using (true) with check (true);
+
+drop trigger if exists touch_offers on public.offers;
+create trigger touch_offers
+  before update on public.offers
+  for each row execute function public.touch_updated_at();
+
+-- The QR code on a printed offer points at offer.html?t=<public_token>.
+-- This function is the only way an unauthenticated visitor can read an offer:
+-- it returns one offer by its secret token and nothing else. Drafts stay
+-- private, so a customer only ever sees an offer that was actually issued.
+create or replace function public.offer_by_token(token uuid)
+returns jsonb
+language sql
+stable
+security definer set search_path = public
+as $$
+  select jsonb_build_object(
+    'offer_number', o.offer_number,
+    'version', o.version,
+    'issued_on', o.issued_on,
+    'valid_until', o.valid_until,
+    'vat_rate', o.vat_rate,
+    'currency', o.currency,
+    'subtotal', o.subtotal,
+    'vat_amount', o.vat_amount,
+    'total', o.total,
+    'status', o.status,
+    'snapshot', o.snapshot
+  )
+  from public.offers o
+  where o.public_token = token
+    and o.status <> 'draft';
+$$;
+
+revoke all on function public.offer_by_token(uuid) from public;
+grant execute on function public.offer_by_token(uuid) to anon, authenticated;
+
+-- Table privileges. Row Level Security above decides which rows each employee
+-- may touch; these grants are the outer layer that lets the signed-in role
+-- reach the tables at all.
+grant select, insert, update, delete on
+  public.projects, public.project_items, public.estimate_lines, public.offers
+  to authenticated;
+grant select on public.company_settings, public.rate_cards to authenticated;
+grant update on public.company_settings to authenticated;
+grant insert, update, delete on public.rate_cards to authenticated;
