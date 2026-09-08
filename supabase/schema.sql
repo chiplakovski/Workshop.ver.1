@@ -413,3 +413,13 @@ $$;
 
 revoke all on function public.offer_by_token(uuid) from public;
 grant execute on function public.offer_by_token(uuid) to anon, authenticated;
+
+-- Table privileges. Row Level Security above decides which rows each employee
+-- may touch; these grants are the outer layer that lets the signed-in role
+-- reach the tables at all.
+grant select, insert, update, delete on
+  public.projects, public.project_items, public.estimate_lines, public.offers
+  to authenticated;
+grant select on public.company_settings, public.rate_cards to authenticated;
+grant update on public.company_settings to authenticated;
+grant insert, update, delete on public.rate_cards to authenticated;
