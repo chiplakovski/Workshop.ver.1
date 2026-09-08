@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Offert</title>
+<link rel="stylesheet" href="app.css" />
+<style>
+  .toolbar {
+    position: relative;
+    z-index: 1;
+    width: min(94vw, 900px);
+    margin: 0 auto;
+    padding: 1.25rem 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .toolbar .spacer { margin-left: auto; }
+  .toolbar__meta { color: var(--faint); font-size: 0.72rem; letter-spacing: 0.05em; }
+
+  /* the sheet: white A4 paper on the dark console background */
+  .sheet {
+    position: relative;
+    z-index: 1;
+    width: min(94vw, 900px);
+    margin: 0 auto 3rem;
+    background: #ffffff;
+    color: #14201c;
+    padding: 26mm 20mm 22mm;
+    box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.8);
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  .sheet h1 { font-size: 26px; letter-spacing: 0.04em; margin: 0 0 2px; text-transform: uppercase; color: #14201c; }
+  .sheet h2 { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #5d6f6a; margin: 0 0 6px; font-weight: 700; }
+  .sheet .muted { color: #5d6f6a; }
+  .sheet .num { font-variant-numeric: tabular-nums; }
+
+  .sheet__top { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; padding-bottom: 14px; border-bottom: 2px solid #14201c; }
+  .company b { display: block; font-size: 15px; margin-bottom: 3px; }
+  .sheet__doc { text-align: right; }
+  .metatable { margin-top: 8px; display: grid; grid-template-columns: auto auto; gap: 2px 14px; font-size: 11px; }
+  .metatable span:nth-child(odd) { color: #5d6f6a; text-align: left; }
+  .metatable span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 18px 0 20px; }
+
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  table.items th {
+    text-align: left; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #5d6f6a; border-bottom: 1px solid #14201c; padding: 0 6px 6px 0; font-weight: 700;
+  }
+  table.items td { padding: 8px 6px 8px 0; border-bottom: 1px solid #dbe4e1; vertical-align: top; }
+  table.items .r { text-align: right; }
+  table.items .pos { color: #5d6f6a; width: 30px; }
+  table.items .desc small { display: block; color: #5d6f6a; margin-top: 2px; }
+
+  .summary { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+  .summary dl { width: 260px; margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 11.5px; }
+  .summary dt { color: #5d6f6a; }
+  .summary dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .summary .grand { border-top: 1px solid #14201c; padding-top: 7px; font-weight: 700; font-size: 13px; }
+
+  .terms { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 26px; padding-top: 14px; border-top: 1px solid #dbe4e1; }
+  .terms dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 11px; }
+  .terms dt { color: #5d6f6a; }
+  .terms dd { margin: 0; }
+
+  .closing { display: flex; justify-content: space-between; gap: 26px; align-items: flex-end; margin-top: 22px; padding-top: 16px; border-top: 1px solid #dbe4e1; }
+  .qr { text-align: center; }
+  .qr svg { width: 104px; height: 104px; display: block; }
+  .qr figcaption { font-size: 9px; color: #5d6f6a; margin-top: 5px; max-width: 120px; line-height: 1.35; }
+  .signature { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .signature div { border-top: 1px solid #14201c; padding-top: 5px; font-size: 10px; color: #5d6f6a; }
+  .sheet__foot { margin-top: 18px; padding-top: 10px; border-top: 1px solid #dbe4e1; font-size: 9.5px; color: #5d6f6a; text-align: center; }
+
+  .draftmark {
+    margin-bottom: 14px; padding: 8px 11px; border: 1px dashed #b98a1e;
+    background: #fff6e2; color: #7a5a10; font-size: 10.5px;
+  }
+
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    body { background: #fff; }
+    .field, .toolbar, .notice, .draftmark { display: none !important; }
+    .sheet { width: auto; margin: 0; padding: 0; box-shadow: none; font-size: 10.5px; }
+  }
+</style>
+</head>
+<body>
+  <div class="field" aria-hidden="true">
+    <div class="field__grid"></div>
+    <div class="field__sweep"></div>
+    <div class="field__vignette"></div>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <a class="btn" id="back-link" href="projects.html">&#8592; Project</a>
+    <button class="btn btn--primary" id="print-btn" type="button">Print / save as PDF</button>
+    <span class="spacer toolbar__meta" id="toolbar-meta"></span>
+  </div>
+
+  <article class="sheet" id="sheet">
+    <p class="muted" style="margin:0;">Loading offer...</p>
+  </article>
+
+  <p id="notice" class="notice" role="status" aria-live="polite"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const hasSupabaseConfig = typeof SUPABASE_URL === "string" && SUPABASE_URL.startsWith("http");
+    const client = hasSupabaseConfig
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { detectSessionInUrl: false } })
+      : null;
+
+    const params = new URLSearchParams(window.location.search);
+    const offerId = params.get("id");
+    const publicToken = params.get("t");
+    const sheet = document.getElementById("sheet");
+    const notice = document.getElementById("notice");
+
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, c =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    function say(message, type = "error") {
+      notice.textContent = message;
+      notice.className = "notice" + (type ? " " + type : "");
+    }
+
+    const money = (value, currency) => new Intl.NumberFormat("sv-SE", {
+      style: "currency", currency: currency || "SEK", maximumFractionDigits: 2
+    }).format(Number(value) || 0);
+    const qty = value => new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 2 }).format(Number(value) || 0);
+
+    function addressBlock(lines) {
+      return lines.filter(Boolean).map(line => esc(line)).join("<br>");
+    }
+
+    function renderOffer(offer, token) {
+      const snap = offer.snapshot || {};
+      const co = snap.company || {};
+      const project = snap.project || {};
+      const items = snap.items || [];
+      const currency = offer.currency || "SEK";
+      const isDraft = offer.status === "draft";
+
+      const publicUrl = token
+        ? new URL("offer.html?t=" + token, window.location.href).href
+        : null;
+
+      sheet.innerHTML = `
+        ${isDraft ? '<p class="draftmark">Utkast — offerten är ännu inte skickad. QR-koden blir aktiv när offerten markeras som skickad i Projects.</p>' : ""}
+        <div class="sheet__top">
+          <div class="company">
+            <b>${esc(co.name || "—")}</b>
+            ${addressBlock([co.address, [co.postal_code, co.city].filter(Boolean).join(" "), co.country])}
+            ${co.phone || co.email ? "<br>" + addressBlock([co.phone, co.email]) : ""}
+          </div>
+          <div class="sheet__doc">
+            <h1>Offert</h1>
+            <div class="metatable">
+              <span>Offertnummer</span><span>${esc(offer.offer_number)}</span>
+              <span>Datum</span><span>${esc(offer.issued_on)}</span>
+              <span>Giltig till</span><span>${esc(offer.valid_until || "—")}</span>
+              <span>Projekt</span><span>${esc(project.number || "—")}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="parties">
+          <div>
+            <h2>Kund</h2>
+            ${addressBlock([
+              project.client_name || "—",
+              project.client_address,
+              project.client_org_number ? "Org.nr " + project.client_org_number : "",
+              project.client_contact ? "Att: " + project.client_contact : ""
+            ])}
+          </div>
+          <div>
+            <h2>Avser</h2>
+            ${addressBlock([
+              project.name,
+              project.site,
+              project.lead_name ? "Vår referens: " + project.lead_name : (snap.issued_by ? "Vår referens: " + snap.issued_by : "")
+            ])}
+          </div>
+        </div>
+
+        <table class="items">
+          <thead>
+            <tr>
+              <th class="pos">Pos</th>
+              <th>Beskrivning</th>
+              <th class="r">Antal</th>
+              <th>Enhet</th>
+              <th class="r">À-pris</th>
+              <th class="r">Belopp</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr>
+                <td class="pos num">${String(item.position).padStart(2, "0")}</td>
+                <td class="desc"><strong>${esc(item.title)}</strong>${item.description ? `<small>${esc(item.description)}</small>` : ""}</td>
+                <td class="r num">${qty(item.quantity)}</td>
+                <td>${esc(item.unit)}</td>
+                <td class="r num">${money(item.unit_price, currency)}</td>
+                <td class="r num">${money(item.total, currency)}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+
+        <div class="summary">
+          <dl>
+            <dt>Summa exkl. moms</dt><dd>${money(offer.subtotal, currency)}</dd>
+            <dt>Moms ${qty(offer.vat_rate)} %</dt><dd>${money(offer.vat_amount, currency)}</dd>
+            <dt class="grand">Att betala inkl. moms</dt><dd class="grand">${money(offer.total, currency)}</dd>
+          </dl>
+        </div>
+
+        <div class="terms">
+          <dl>
+            <dt>Betalningsvillkor</dt><dd>${esc(co.payment_terms || "30 dagar netto")}</dd>
+            <dt>Leveransvillkor</dt><dd>${esc(co.delivery_terms || "Enligt överenskommelse")}</dd>
+            <dt>Giltighetstid</dt><dd>Till och med ${esc(offer.valid_until || "—")}</dd>
+          </dl>
+          <dl>
+            <dt>Org.nr</dt><dd>${esc(co.org_number || "—")}</dd>
+            <dt>Momsreg.nr</dt><dd>${esc(co.vat_number || "—")}</dd>
+            <dt>Bankgiro</dt><dd>${esc(co.bankgiro || "—")}</dd>
+            ${co.f_tax === false ? "" : "<dt>Skatt</dt><dd>Godkänd för F-skatt</dd>"}
+          </dl>
+        </div>
+
+        <div class="closing">
+          ${publicUrl ? `
+            <figure class="qr" style="margin:0;">
+              <div id="qr-target"></div>
+              <figcaption id="qr-caption">Skanna för att öppna offerten digitalt</figcaption>
+            </figure>` : ""}
+          <div class="signature">
+            <div>Ort och datum</div>
+            <div>Beställarens underskrift</div>
+          </div>
+        </div>
+
+        <p class="sheet__foot">
+          ${esc(co.late_interest_terms || "Dröjsmålsränta enligt räntelagen.")}
+          ${co.offer_footer ? " " + esc(co.offer_footer) : ""}
+        </p>`;
+
+      if (publicUrl) {
+        if (window.qrcode) {
+          const qr = window.qrcode(0, "M");
+          qr.addData(publicUrl);
+          qr.make();
+          document.getElementById("qr-target").innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
+        } else {
+          // The QR library is served from a CDN. If it cannot be reached, print
+          // the link itself so the offer still carries a working reference.
+          document.getElementById("qr-caption").innerHTML =
+            'Öppna offerten digitalt:<br><span style="word-break:break-all;">' + esc(publicUrl) + "</span>";
+          say("QR code library could not be loaded — the offer link is printed as text instead.", "error");
+        }
+      }
+
+      document.title = "Offert " + offer.offer_number;
+      document.getElementById("toolbar-meta").textContent =
+        offer.offer_number + " · " + offer.status + (publicUrl ? " · QR → " + publicUrl : "");
+    }
+
+    async function start() {
+      if (!client) { sheet.innerHTML = '<p class="muted">Supabase is not configured — see SETUP.md.</p>'; return; }
+
+      if (publicToken) {
+        document.getElementById("back-link").hidden = true;
+        const { data, error } = await client.rpc("offer_by_token", { token: publicToken });
+        if (error) { sheet.innerHTML = '<p class="muted">Offerten kunde inte hämtas.</p>'; return say(error.message); }
+        if (!data) { sheet.innerHTML = '<p class="muted">Offerten finns inte längre, eller har inte skickats.</p>'; return; }
+        renderOffer(data, publicToken);
+        return;
+      }
+
+      const { data: session } = await client.auth.getSession();
+      if (!session.session) { window.location.href = "login.html"; return; }
+      if (!offerId) { sheet.innerHTML = '<p class="muted">No offer selected.</p>'; return; }
+
+      const { data, error } = await client.from("offers").select("*").eq("id", offerId).maybeSingle();
+      if (error || !data) { sheet.innerHTML = '<p class="muted">Offer not found.</p>'; return say(error?.message || "Offer not found."); }
+      document.getElementById("back-link").href = "projects.html#p=" + data.project_id;
+      renderOffer(data, data.public_token);
+    }
+
+    document.getElementById("print-btn").addEventListener("click", () => window.print());
+    start();
+  </script>
+</body>
+</html>
